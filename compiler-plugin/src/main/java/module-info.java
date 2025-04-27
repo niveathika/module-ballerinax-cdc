@@ -18,6 +18,9 @@
 
 module io.ballerina.lib.cdc.compiler {
     requires io.ballerina.lang;
+    requires io.ballerina.parser;
+    requires io.ballerina.tools.api;
 
     exports io.ballerina.lib.cdc.compiler;
+    exports io.ballerina.lib.cdc.compiler.validator;
 }
