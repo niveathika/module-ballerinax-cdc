@@ -13,11 +13,9 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-import ballerina/crypto;
 
 const string NAME = "name";
 const string CONNECTOR_CLASS = "connector.class";
-const string TASKS_MAX = "tasks.max";
 const string MAX_QUEUE_SIZE = "max.queue.size";
 const string MAX_BATCH_SIZE = "max.batch.size";
 const string EVENT_PROCESSING_FAILURE_HANDLING_MODE = "event.processing.failure.handling.mode";
@@ -30,16 +28,6 @@ const string DATABASE_USER = "database.user";
 const string DATABASE_PASSWORD = "database.password";
 const string DATABASE_QUERY_TIMEOUTS_MS = "database.query.timeout.ms";
 const string DECIMAL_HANDLING_MODE = "decimal.handling.mode";
-const string CONNECT_TIMEOUT_MS = "connect.timeout.ms";
-const string TABLE_INCLUDE_LIST = "table.include.list";
-const string TABLE_EXCLUDE_LIST = "table.exclude.list";
-const string COLUMN_INCLUDE_LIST = "column.include.list";
-const string COLUMN_EXCLUDE_LIST = "column.exclude.list";
-const string DATABASE_SSL_MODE = "database.ssl.mode";
-const string DATABASE_SSL_KEYSTORE = "database.ssl.keystore";
-const string DATABASE_SSL_KEYSTORE_PASSWORD = "database.ssl.keystore.password";
-const string DATABASE_SSL_TRUSTSTORE = "database.ssl.truststore";
-const string DATABASE_SSL_TRUSTSTORE_PASSWORD = "database.ssl.truststore.password";
 const string SCHEMA_HISTORY_INTERNAL = "schema.history.internal";
 const string TOPIC_PREFIX = "topic.prefix";
 const string SCHEMA_HISTORY_INTERNAL_KAFKA_BOOTSTRAP_SERVERS = "schema.history.internal.kafka.bootstrap.servers";
@@ -77,7 +65,7 @@ const string ORACLE_URL = "database.url";
 const string ORACLE_PDB_NAME = "database.dbname";
 const string ORACLE_CONNECTION_ADAPTER = "database.connection.adapter";
 
-isolated function getDebeziumProperties(MySqlListenerConfiguration|MsSqlListenerConfiguration|PostgresListenerConfiguration|OracleListenerConfiguration config) returns map<string> {
+public isolated function getDebeziumProperties(ListenerConfiguration config) returns map<string> {
     map<string> configMap = {};
 
     // Common configurations
@@ -90,14 +78,14 @@ isolated function getDebeziumProperties(MySqlListenerConfiguration|MsSqlListener
     populateOffsetStorageConfigurations(config.offsetStorage, configMap);
 
     // Database-specific configurations
-    populateDatabaseConfigurations(config.database, configMap);
+  //  populateDatabaseConfigurations(config.database, configMap);
 
     configMap[INCLUDE_SCHEMA_CHANGES] = "false";
     return configMap;
 }
 
 // Populates common configurations shared across all databases
-isolated function populateCommonConfigurations(MySqlListenerConfiguration|MsSqlListenerConfiguration|PostgresListenerConfiguration|OracleListenerConfiguration config, map<string> configMap) {
+isolated function populateCommonConfigurations(ListenerConfiguration config, map<string> configMap) {
     configMap[NAME] = config.engineName;
     configMap[CONNECTOR_CLASS] = config.connectorClass;
     configMap[MAX_QUEUE_SIZE] = config.maxQueueSize.toString();
@@ -142,88 +130,6 @@ isolated function populateOffsetStorageConfigurations(FileOffsetStorage|KafkaOff
     }
 }
 
-// Populates database-specific configurations
-isolated function populateDatabaseConfigurations(MySqlDatabaseConnection|MsSqlDatabaseConnection|PostgresDatabaseConnection|OracleDatabaseConnection connection, map<string> configMap) {
-    configMap[DATABASE_HOSTNAME] = connection.hostname;
-    configMap[DATABASE_PORT] = connection.port.toString();
-    configMap[DATABASE_USER] = connection.username;
-    configMap[DATABASE_PASSWORD] = connection.password;
-    configMap[TASKS_MAX] = connection.tasksMax.toString();
-
-    if connection.connectTimeout !is () {
-        configMap[CONNECT_TIMEOUT_MS] = getMillisecondValueOf(connection.connectTimeout ?: 0);
-    }
-
-    populateSslConfigurations(connection, configMap);
-    populateTableAndColumnConfigurations(connection, configMap);
-
-    if connection is MySqlDatabaseConnection {
-        populateMySqlConfigurations(connection, configMap);
-    } else if connection is MsSqlDatabaseConnection {
-        populateMsSqlConfigurations(connection, configMap);
-    } else if connection is PostgresDatabaseConnection {
-        populatePostgresConfigurations(connection, configMap);
-    } else {
-        populateOracleConfigurations(connection, configMap);
-    }
-}
-
-isolated function populateSslConfigurations(MySqlDatabaseConnection|MsSqlDatabaseConnection|PostgresDatabaseConnection|OracleDatabaseConnection connection, map<string> configMap) {
-    SecureDatabaseConnection? secure = connection.secure;
-    if secure !is () {
-        configMap[DATABASE_SSL_MODE] = secure.sslMode.toString();
-
-        crypto:KeyStore? keyStore = secure.keyStore;
-        if keyStore !is () {
-            configMap[DATABASE_SSL_KEYSTORE] = keyStore.path;
-            configMap[DATABASE_SSL_KEYSTORE_PASSWORD] = keyStore.password;
-        }
-
-        crypto:TrustStore? trustStore = secure.trustStore;
-        if trustStore !is () {
-            configMap[DATABASE_SSL_TRUSTSTORE] = trustStore.path;
-            configMap[DATABASE_SSL_TRUSTSTORE_PASSWORD] = trustStore.password;
-        }
-    }
-}
-
-// Populates table and column inclusion/exclusion configurations
-isolated function populateTableAndColumnConfigurations(MySqlDatabaseConnection|MsSqlDatabaseConnection|PostgresDatabaseConnection|OracleDatabaseConnection connection, map<string> configMap) {
-    string|string[]? includedTables = connection.includedTables;
-    if includedTables !is () {
-        configMap[TABLE_INCLUDE_LIST] = includedTables is string ? includedTables : string:'join(",", ...includedTables);
-    }
-
-    string|string[]? excludedTables = connection.excludedTables;
-    if excludedTables !is () {
-        configMap[TABLE_EXCLUDE_LIST] = excludedTables is string ? excludedTables : string:'join(",", ...excludedTables);
-    }
-
-    string|string[]? includedColumns = connection.includedColumns;
-    if includedColumns !is () {
-        configMap[COLUMN_INCLUDE_LIST] = includedColumns is string ? includedColumns : string:'join(",", ...includedColumns);
-    }
-
-    string|string[]? excludedColumns = connection.excludedColumns;
-    if excludedColumns !is () {
-        configMap[COLUMN_EXCLUDE_LIST] = excludedColumns is string ? excludedColumns : string:'join(",", ...excludedColumns);
-    }
-}
-
-// Populates MySQL-specific configurations
-isolated function populateMySqlConfigurations(MySqlDatabaseConnection connection, map<string> configMap) {
-    configMap[MYSQL_DATABASE_SERVER_ID] = connection.databaseServerId.toString();
-
-    string|string[]? includedDatabases = connection.includedDatabases;
-    if includedDatabases !is () {
-        configMap[MYSQL_DATABASE_INCLUDE_LIST] = includedDatabases is string ? includedDatabases : string:'join(",", ...includedDatabases);
-    }
-
-    string|string[]? excludedDatabases = connection.excludedDatabases;
-    if excludedDatabases !is () {
-        configMap[MYSQL_DATABASE_EXCLUDE_LIST] = excludedDatabases is string ? excludedDatabases : string:'join(",", ...excludedDatabases);
-    }
-}
 
 // Populates MSSQL-specific configurations
 isolated function populateMsSqlConfigurations(MsSqlDatabaseConnection connection, map<string> configMap) {
@@ -279,7 +185,7 @@ isolated function populateSchemaConfigurations(MsSqlDatabaseConnection|PostgresD
     }
 }
 
-isolated function getMillisecondValueOf(decimal value) returns string {
+public isolated function getMillisecondValueOf(decimal value) returns string {
     string milliSecondVal = (value * 1000).toBalString();
     return milliSecondVal.substring(0, milliSecondVal.indexOf(".") ?: milliSecondVal.length());
 }

@@ -16,8 +16,8 @@
 import ballerina/log;
 import ballerina/os;
 import ballerinax/cdc;
+import ballerinax/mysql;
 import ballerinax/cdc.mysql.driver as _;
-import ballerinax/googleapis.gmail;
 
 configurable string refreshToken = os:getEnv("REFRESH_TOKEN");
 configurable string clientId = os:getEnv("CLIENT_ID");
@@ -28,7 +28,7 @@ configurable string sender = os:getEnv("SENDER");
 configurable string username = os:getEnv("DB_USERNAME");
 configurable string password = os:getEnv("DB_PASSWORD");
 
-listener cdc:MySqlListener financeDBListener = new (
+listener mysql:CdcListener financeDBListener = new (
     database = {
         username,
         password,
@@ -39,28 +39,13 @@ listener cdc:MySqlListener financeDBListener = new (
     skippedOperations = [cdc:TRUNCATE, cdc:UPDATE, cdc:DELETE]
 );
 
-final gmail:Client gmail = check new ({
-    auth: {
-        refreshToken,
-        clientId,
-        clientSecret
-    }
-});
-
 service cdc:Service on financeDBListener {
     isolated remote function onCreate(Transactions trx) returns error? {
         log:printInfo(`Create trx event received Transaction Id: ${trx.tx_id}`);
         if trx.amount > 10000.00 {
             string fraudAlert = string `Fraud detected! Transaction Id: ${trx.tx_id}, User Id: ${trx.user_id}, Amount: $${trx.amount}`;
 
-            gmail:MessageRequest message = {
-                to: [recipient],
-                subject: "Fraud Alert: Suspicious Transaction Detected",
-                bodyInText: fraudAlert
-            };
-
-            gmail:Message sendResult = check gmail->/users/me/messages/send.post(message);
-            log:printInfo(`Email sent. Message ID: ${sendResult.id}`);
+            log:printInfo(fraudAlert);
         }
     }
 

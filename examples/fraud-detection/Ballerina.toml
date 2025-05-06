@@ -15,3 +15,9 @@ org="ballerinax"
 name="cdc.mysql.driver"
 version="0.1.0"
 repository="local"
+
+[[dependency]]
+org="ballerinax"
+name="mysql"
+version="1.15.1"
+repository="local"

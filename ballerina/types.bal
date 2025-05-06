@@ -14,7 +14,6 @@
 // specific language governing permissions and limitations
 // under the License.
 import ballerina/crypto;
-import ballerina/random;
 
 # Represents the SSL modes for secure database connections.
 public enum SslMode {
@@ -193,27 +192,6 @@ public type DatabaseConnection record {|
     string|string[] includedColumns?;
     string|string[] excludedColumns?;
 |};
-
-# Represents the configuration for a MySQL database connection.
-#
-# + hostname - The hostname of the MySQL server
-# + port - The port number of the MySQL server
-# + databaseServerId - The unique identifier for the MySQL server
-# + includedDatabases - A list of regular expressions matching fully-qualified database identifiers to capture changes from (should not be used alongside databaseExclude)
-# + excludedDatabases - A list of regular expressions matching fully-qualified database identifiers to exclude from change capture (should not be used alongside databaseInclude)
-# + tasksMax - The maximum number of tasks to create for this connector. Because the MySQL connector always uses a single task, changing the default value has no effect
-# + secure - The connector establishes an encrypted connection if the server supports secure connections
-public type MySqlDatabaseConnection record {|
-    *DatabaseConnection;
-    string hostname = "localhost";
-    int port = 3306;
-    string databaseServerId = (checkpanic random:createIntInRange(0, 100000)).toString();
-    string|string[] includedDatabases?;
-    string|string[] excludedDatabases?;
-    int tasksMax = 1;
-    SecureDatabaseConnection secure = {};
-|};
-
 # Represents the configuration for an MSSQL database connection.
 #
 # + hostname - The hostname of the MSSQL server
@@ -311,16 +289,6 @@ public type ListenerConfiguration record {|
     boolean skipMessagesWithoutChange = false;
     boolean sendTombstonesOnDelete = false;
     DecimalHandlingMode decimalHandlingMode = DOUBLE;
-|};
-
-# Represents the configuration for a MySQL CDC connector.
-#
-# + connectorClass - The class name of the MySQL connector implementation to use
-# + database - The MySQL database connection configuration
-public type MySqlListenerConfiguration record {|
-    *ListenerConfiguration;
-    string connectorClass = "io.debezium.connector.mysql.MySqlConnector";
-    MySqlDatabaseConnection database;
 |};
 
 # Represents the configuration for an MSSQL CDC connector.
