@@ -14,23 +14,12 @@
 // specific language governing permissions and limitations
 // under the License.
 
-// Importing jsondata module for cdc native jar,
-// which facilitates creating Ballerina records from JSON events.
-import ballerina/data.jsondata as _;
-import ballerina/jballerina.java as java;
+# Provides a set of configurations for the CDC service.
+#
+# + tables - The name of the table or an array of table names to capture events from
+public type CdcServiceConfig record {|
+    string|string[] tables;
+|};
 
-# Initializes the CDC module.
-isolated function init() {
-    setModule();
-    initializeLoggingConfigurations();
-}
-
-# Sets the module information for the CDC module.
-isolated function setModule() = @java:Method {
-    'class: "io.ballerina.lib.cdc.utils.ModuleUtils"
-} external;
-
-# Sets io.debezium log levels to SEVERE
-isolated function initializeLoggingConfigurations() = @java:Method {
-    'class: "io.ballerina.lib.cdc.utils.ModuleUtils"
-} external;
+# The annotation to configure a CDC service.
+public annotation CdcServiceConfig ServiceConfig on service;

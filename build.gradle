@@ -68,6 +68,7 @@ subprojects {
     configurations {
         jbalTools
         ballerinaStdLibs
+        externalJars
     }
 
     dependencies {
@@ -75,6 +76,17 @@ subprojects {
         jbalTools("org.ballerinalang:jballerina-tools:${ballerinaLangVersion}") {
             transitive = false
         }
+
+        ballerinaStdLibs "io.ballerina.stdlib:io-ballerina:${stdlibIoVersion}"
+        ballerinaStdLibs "io.ballerina.stdlib:time-ballerina:${stdlibTimeVersion}"
+
+        ballerinaStdLibs "io.ballerina.stdlib:crypto-ballerina:${stdlibCryptoVersion}"
+        ballerinaStdLibs "io.ballerina.stdlib:random-ballerina:${stdlibRandomVersion}"
+
+        ballerinaStdLibs "io.ballerina.lib:data.jsondata-ballerina:${stdlibDataJsonDataVersion}"
+
+        ballerinaStdLibs "io.ballerina.stdlib:observe-ballerina:${observeVersion}"
+        ballerinaStdLibs "io.ballerina:observe-ballerina:${observeInternalVersion}"
     }
 }
 

@@ -137,5 +137,5 @@ compileJava {
     }
 }
 
-test.dependsOn ":cdc-ballerina:build"
+test.dependsOn ":cdc-ballerina:test"
 build.dependsOn ":cdc-ballerina:build"
