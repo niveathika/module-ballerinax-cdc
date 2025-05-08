@@ -18,31 +18,7 @@
 
 import org.apache.tools.ant.taskdefs.condition.Os
 
-tasks.register('test') {
-    doLast {
-        try {
-            exec {
-                workingDir project.projectDir
-                println("Working dir: ${workingDir}")
-                if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-                    commandLine 'cmd', "/c", "build.bat run && exit %ERRORLEVEL%"
-                } else {
-                    commandLine 'sh', "-c", "chmod +x ./build.sh && ./build.sh run"
-                }
-            }
-        } catch (Exception e) {
-            println("Example Build failed: " + e.message)
-            throw e
-        }
-    }
-}
-
 tasks.register('build') {
-    gradle.taskGraph.whenReady { graph ->
-        if (graph.hasTask(":cdc-examples:test")) {
-            build.enabled = false
-        }
-    }
     doLast {
         try {
             exec {
@@ -61,5 +37,4 @@ tasks.register('build') {
     }
 }
 
-test.dependsOn ":cdc-ballerina:build"
 build.dependsOn ":cdc-ballerina:build"

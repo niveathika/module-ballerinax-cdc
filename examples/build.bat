@@ -30,8 +30,6 @@ for /f "tokens=2 delims== " %%A in ('findstr /r "^name" "%BAL_HOME_DIR%\Ballerin
     set BAL_PACKAGE_NAME=!BAL_PACKAGE_NAME:~0,-1!
 )
 
-echo Package name: %BAL_PACKAGE_NAME%
-
 :: Push the package to the local repository
 cd /d "%BAL_HOME_DIR%"
 call bal pack
