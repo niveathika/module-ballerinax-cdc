@@ -24,7 +24,6 @@ import io.ballerina.lib.cdc.models.Payload;
 import io.ballerina.lib.cdc.models.Service;
 import io.ballerina.lib.cdc.utils.Constants.DebeziumOperation;
 import io.ballerina.lib.cdc.utils.Constants.EventMembers;
-import io.ballerina.lib.cdc.utils.Constants.NativeDataKeys;
 import io.ballerina.lib.cdc.utils.Constants.ServiceMethodNames;
 import io.ballerina.lib.data.jsondata.json.Native;
 import io.ballerina.runtime.api.Runtime;
@@ -54,6 +53,7 @@ import static io.ballerina.lib.cdc.utils.Constants.BallerinaErrors.EVENT_PROCESS
 import static io.ballerina.lib.cdc.utils.Constants.BallerinaErrors.PAYLOAD_BINDING_ERROR;
 import static io.ballerina.lib.cdc.utils.Constants.ENABLE_CONSTRAINT_VALIDATION;
 import static io.ballerina.lib.cdc.utils.Constants.PARSER_AS_TYPE_OPTIONS;
+import static io.ballerina.lib.cdc.utils.Constants.SERVICE_MAP_ALL_KEY;
 import static io.ballerina.lib.cdc.utils.ErrorUtils.createError;
 import static io.ballerina.lib.cdc.utils.ErrorUtils.getEventProcessingErrorDetail;
 import static io.ballerina.lib.cdc.utils.ModuleUtils.getModule;
@@ -71,9 +71,9 @@ public class BalChangeConsumer implements DebeziumEngine.ChangeConsumer<ChangeEv
 
     public BalChangeConsumer(Map<String, Service> serviceMap, Runtime runtime) {
         this.serviceMap = new HashMap<>(serviceMap);
-        if (serviceMap.size() == 1 && serviceMap.containsKey(NativeDataKeys.SERVICE_MAP_ALL)) {
+        if (serviceMap.size() == 1 && serviceMap.containsKey(SERVICE_MAP_ALL_KEY)) {
             this.isSingleServiceAttached = true;
-            this.singleService = serviceMap.get(NativeDataKeys.SERVICE_MAP_ALL);
+            this.singleService = serviceMap.get(SERVICE_MAP_ALL_KEY);
         } else {
             this.isSingleServiceAttached = false;
             this.singleService = null;

@@ -23,13 +23,18 @@ import io.ballerina.runtime.api.values.BString;
 /**
  * This class contains constants used in the CDC module.
  */
-public class Constants {
+public final class Constants {
 
     public static final String PACKAGE = "ballerinax";
     public static final String MODULE = "cdc";
     public static final String COLON = ":";
+
+    // cdc:ServiceConfig Annotation
     public static final String ANN_NAME_EVENTS_FROM = "ServiceConfig";
     public static final BString ANN_CONFIG_TABLES = StringUtils.fromString("tables");
+
+    // Service Map all key
+    public static final String SERVICE_MAP_ALL_KEY = "*";
 
     //data.jsondata parseAsType constants
     public static final String ENABLE_CONSTRAINT_VALIDATION = "enableConstraintValidation";
@@ -37,16 +42,6 @@ public class Constants {
     public static final String PARSER_AS_TYPE_OPTIONS =  "Options";
 
     private Constants() {
-    }
-
-    public static class NativeDataKeys {
-        public static final String TABLE_TO_SERVICE_MAP = "TABLE_TO_SERVICE_MAP";
-        public static final String SERVICE_MAP_ALL = "*";
-        public static final String DEBEZIUM_ENGINE = "DEB_ENGINE";
-        public static final String EXECUTOR_SERVICE = "ExecutorService";
-
-        private NativeDataKeys() {
-        }
     }
 
     public static class ServiceMethodNames {
