@@ -213,17 +213,17 @@ public class CdcFunctionValidator {
         }
 
         if (actualTypeDesc == TypeDescKind.UNION && typeSymbol instanceof UnionTypeSymbol unionTypeSymbol) {
-            for (TypeSymbol memberType : unionTypeSymbol.memberTypeDescriptors()) {
-                TypeSymbol actualMemberType = memberType;
-                if (memberType.typeKind() == TYPE_REFERENCE &&
-                        memberType instanceof TypeReferenceTypeSymbol unionMemberSymbol) {
-                    actualMemberType = unionMemberSymbol.typeDescriptor();
-                }
-                if (actualMemberType.typeKind() != RECORD) {
-                    reportErrorDiagnostics(INVALID_PARAM_TYPE, requiredParam.location(),
-                            requiredParam.paramName().map(Node::toString).orElse(""), RECORD.getName());
-                    return false;
-                }
+            boolean allMembersAreRecords = unionTypeSymbol.memberTypeDescriptors().stream()
+                    .map(memberType -> memberType.typeKind() == TYPE_REFERENCE &&
+                            memberType instanceof TypeReferenceTypeSymbol unionMemberSymbol
+                            ? unionMemberSymbol.typeDescriptor()
+                            : memberType)
+                    .allMatch(memberType -> memberType.typeKind() == RECORD);
+
+            if (!allMembersAreRecords) {
+                reportErrorDiagnostics(INVALID_PARAM_TYPE, requiredParam.location(),
+                        requiredParam.paramName().map(Node::toString).orElse(""), RECORD.getName());
+                return false;
             }
         } else if (actualTypeDesc != RECORD) {
             reportErrorDiagnostics(INVALID_PARAM_TYPE, requiredParam.typeName().location(),
@@ -279,9 +279,9 @@ public class CdcFunctionValidator {
     }
 
     private void reportDiagnosticsForNonRequiredParam(ParameterNode parameterNode) {
-        Optional<Symbol> symbolOpt = semanticModel.symbol(parameterNode);
-        symbolOpt.ifPresent(symbol -> reportErrorDiagnostics(MUST_BE_REQUIRED_PARAM, parameterNode.location(),
-                symbol.getName().orElse("")));
+        semanticModel.symbol(parameterNode)
+                .ifPresent(symbol -> reportErrorDiagnostics(MUST_BE_REQUIRED_PARAM, parameterNode.location(),
+                        symbol.getName().orElse("")));
     }
 
     private void reportErrorDiagnostics(DiagnosticCodes diagnosticCode, Location location, String... formattedStrings) {

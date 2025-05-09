@@ -70,15 +70,15 @@ public abstract class AbstractCdcCodeTemplate implements CodeAction {
     protected abstract String getCodeActionDescription();
 
     @Override
-    public List<DocumentEdit> execute(CodeActionExecutionContext codeActionExecutionContext) {
-        LineRange lineRange = extractLineRange(codeActionExecutionContext);
-        boolean isPostgresListener = extractIsPostgresListener(codeActionExecutionContext);
+    public List<DocumentEdit> execute(CodeActionExecutionContext context) {
+        LineRange lineRange = extractArgument(context, NODE_LOCATION, LineRange.class, null);
+        boolean isPostgresListener = extractArgument(context, IS_POSTGRES_LISTENER, Boolean.class, false);
 
         if (lineRange == null) {
             return Collections.emptyList();
         }
 
-        SyntaxTree syntaxTree = codeActionExecutionContext.currentDocument().syntaxTree();
+        SyntaxTree syntaxTree = context.currentDocument().syntaxTree();
         NonTerminalNode node = findNode(syntaxTree, lineRange);
         if (!(node instanceof ServiceDeclarationNode serviceDeclarationNode)) {
             return Collections.emptyList();
@@ -86,26 +86,16 @@ public abstract class AbstractCdcCodeTemplate implements CodeAction {
 
         List<TextEdit> textEdits = generateTextEdits(serviceDeclarationNode, isPostgresListener);
         TextDocumentChange change = TextDocumentChange.from(textEdits.toArray(new TextEdit[0]));
-        return Collections.singletonList(new DocumentEdit(codeActionExecutionContext.fileUri(),
+        return List.of(new DocumentEdit(context.fileUri(),
                 SyntaxTree.from(syntaxTree, change)));
     }
 
-    protected LineRange extractLineRange(CodeActionExecutionContext context) {
-        for (CodeActionArgument argument : context.arguments()) {
-            if (NODE_LOCATION.equals(argument.key())) {
-                return argument.valueAs(LineRange.class);
-            }
-        }
-        return null;
-    }
-
-    protected boolean extractIsPostgresListener(CodeActionExecutionContext context) {
-        for (CodeActionArgument argument : context.arguments()) {
-            if (IS_POSTGRES_LISTENER.equals(argument.key())) {
-                return argument.valueAs(Boolean.class);
-            }
-        }
-        return false;
+    protected <T> T extractArgument(CodeActionExecutionContext context, String key, Class<T> type, T defaultValue) {
+        return context.arguments().stream()
+                .filter(arg -> key.equals(arg.key()))
+                .map(arg -> arg.valueAs(type))
+                .findFirst()
+                .orElse(defaultValue);
     }
 
     protected TextRange calculateTextRange(ServiceDeclarationNode serviceDeclarationNode) {
