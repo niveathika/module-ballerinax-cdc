@@ -38,9 +38,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import static io.ballerina.lib.cdc.compiler.Constants.IS_POSTGRES_LISTENER;
-import static io.ballerina.lib.cdc.compiler.Constants.NODE_LOCATION;
 import static io.ballerina.lib.cdc.compiler.Utils.findNode;
+import static io.ballerina.lib.cdc.compiler.codeaction.Constants.IS_POSTGRES_LISTENER;
+import static io.ballerina.lib.cdc.compiler.codeaction.Constants.NODE_LOCATION;
 
 /**
  * Abstract class for CDC code templates to share common functionality.

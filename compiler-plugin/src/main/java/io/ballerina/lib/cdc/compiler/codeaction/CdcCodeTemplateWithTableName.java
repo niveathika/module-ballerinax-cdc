@@ -24,30 +24,33 @@ import io.ballerina.tools.text.TextRange;
 import java.util.ArrayList;
 import java.util.List;
 
-import static io.ballerina.lib.cdc.compiler.Constants.CODE_TEMPLATE_NAME_WITH_TABLE_NAME;
-import static io.ballerina.lib.cdc.compiler.Constants.LS;
+import static io.ballerina.lib.cdc.compiler.codeaction.Constants.CODE_TEMPLATE_NAME_WITH_TABLE_NAME;
+import static io.ballerina.lib.cdc.compiler.codeaction.Constants.LS;
+import static io.ballerina.lib.cdc.compiler.codeaction.Constants.TAB;
 
 public class CdcCodeTemplateWithTableName extends AbstractCdcCodeTemplate {
 
     private static final String ON_READ_FUNCTION_TEXT = LS +
-            "    remote function onRead(record {|anydata...;|} after, string tableName) returns cdc:Error? {" +
-            LS + LS + "    }" + LS;
+            TAB + "remote function onRead(record {|anydata...;|} after, string tableName) returns cdc:Error? {" + LS +
+            TAB + "}" + LS;
 
     private static final String ON_CREATE_FUNCTION_TEXT = LS +
-            "    remote function onCreate(record {|anydata...;|} after, string tableName) returns cdc:Error? {" +
-            LS + LS + "    }" + LS;
+            TAB + "remote function onCreate(record {|anydata...;|} after, string tableName) returns cdc:Error? {" + LS +
+            TAB + "}" + LS;
 
     private static final String ON_UPDATE_FUNCTION_TEXT = LS +
-            "    remote function onUpdate(record {|anydata...;|} before, record {|anydata...;|} after, " +
-            "string tableName) returns cdc:Error? {" +
-            LS + LS + "    }" + LS;
+            TAB + "remote function onUpdate(record {|anydata...;|} before, record {|anydata...;|} after, " +
+            "string tableName) returns cdc:Error? {" + LS +
+            TAB + "}" + LS;
 
     private static final String ON_DELETE_FUNCTION_TEXT = LS +
-            "    remote function onDelete(record {|anydata...;|} before, string tableName) returns cdc:Error? {" +
-            LS + LS + "    }" + LS;
+            TAB + "remote function onDelete(record {|anydata...;|} before, string tableName) " +
+            "returns cdc:Error? {" + LS +
+            TAB + "}" + LS;
 
     private static final String ON_TRUNCATE_FUNCTION_TEXT = LS +
-            "    remote function onTruncate(string tableName) returns cdc:Error? {" + LS + LS + "    }" + LS;
+            TAB + "remote function onTruncate(string tableName) returns cdc:Error? {" + LS +
+            TAB + "}" + LS;
 
     @Override
     protected List<TextEdit> generateTextEdits(ServiceDeclarationNode node, boolean isPostgresListener) {

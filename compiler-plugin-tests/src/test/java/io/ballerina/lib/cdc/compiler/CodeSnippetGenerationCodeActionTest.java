@@ -28,10 +28,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
-import static io.ballerina.lib.cdc.compiler.Constants.CODE_TEMPLATE_NAME;
-import static io.ballerina.lib.cdc.compiler.Constants.CODE_TEMPLATE_NAME_WITH_TABLE_NAME;
-import static io.ballerina.lib.cdc.compiler.Constants.IS_POSTGRES_LISTENER;
-import static io.ballerina.lib.cdc.compiler.Constants.NODE_LOCATION;
+import static io.ballerina.lib.cdc.compiler.codeaction.Constants.CODE_TEMPLATE_NAME;
+import static io.ballerina.lib.cdc.compiler.codeaction.Constants.CODE_TEMPLATE_NAME_WITH_TABLE_NAME;
+import static io.ballerina.lib.cdc.compiler.codeaction.Constants.IS_POSTGRES_LISTENER;
+import static io.ballerina.lib.cdc.compiler.codeaction.Constants.NODE_LOCATION;
 
 /**
  * A class for testing code snippet generation code actions.

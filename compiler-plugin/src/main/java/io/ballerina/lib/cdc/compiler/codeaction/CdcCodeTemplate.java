@@ -24,8 +24,9 @@ import io.ballerina.tools.text.TextRange;
 import java.util.ArrayList;
 import java.util.List;
 
-import static io.ballerina.lib.cdc.compiler.Constants.CODE_TEMPLATE_NAME;
-import static io.ballerina.lib.cdc.compiler.Constants.LS;
+import static io.ballerina.lib.cdc.compiler.codeaction.Constants.CODE_TEMPLATE_NAME;
+import static io.ballerina.lib.cdc.compiler.codeaction.Constants.LS;
+import static io.ballerina.lib.cdc.compiler.codeaction.Constants.TAB;
 
 /**
  * Code action template for adding CDC-related functions to a service.
@@ -33,20 +34,25 @@ import static io.ballerina.lib.cdc.compiler.Constants.LS;
 public class CdcCodeTemplate extends AbstractCdcCodeTemplate {
 
     private static final String ON_READ_FUNCTION_TEXT = LS +
-            "    remote function onRead(record {|anydata...;|} after) returns cdc:Error? {" + LS + LS + "    }" + LS;
+            TAB + "remote function onRead(record {|anydata...;|} after) returns cdc:Error? {" + LS +
+            TAB + "}" + LS;
 
     private static final String ON_CREATE_FUNCTION_TEXT = LS +
-            "    remote function onCreate(record {|anydata...;|} after) returns cdc:Error? {" + LS + LS + "    }" + LS;
+            TAB + "remote function onCreate(record {|anydata...;|} after) returns cdc:Error? {" + LS +
+            TAB + "}" + LS;
 
     private static final String ON_UPDATE_FUNCTION_TEXT = LS +
-            "    remote function onUpdate(record {|anydata...;|} before, record {|anydata...;|} after) " +
-            "returns cdc:Error? {" + LS + LS + "    }" + LS;
+            TAB + "remote function onUpdate(record {|anydata...;|} before, record {|anydata...;|} after) " +
+            "returns cdc:Error? {" + LS +
+            TAB + "}" + LS;
 
     private static final String ON_DELETE_FUNCTION_TEXT = LS +
-            "    remote function onDelete(record {|anydata...;|} before) returns cdc:Error? {" + LS + LS + "    }" + LS;
+            TAB + "remote function onDelete(record {|anydata...;|} before) returns cdc:Error? {" + LS +
+            TAB + "}" + LS;
 
     private static final String ON_TRUNCATE_FUNCTION_TEXT = LS +
-            "    remote function onTruncate() returns cdc:Error? {" + LS + LS + "    }" + LS;
+            TAB + "remote function onTruncate() returns cdc:Error? {" + LS +
+            TAB + "}" + LS;
 
     @Override
     protected List<TextEdit> generateTextEdits(ServiceDeclarationNode serviceDeclarationNode,
