@@ -60,12 +60,10 @@ public class CdcServiceAnalysisTask implements AnalysisTask<SyntaxNodeAnalysisCo
 
         ServiceDeclarationSymbol serviceDeclarationSymbol = (ServiceDeclarationSymbol) symbol.get();
         Optional<TypeSymbol> serviceTypeSymbol = serviceDeclarationSymbol.typeDescriptor();
-        if (serviceTypeSymbol.isEmpty() || serviceTypeSymbol.get().getModule().isEmpty()) {
-            return false;
-        }
-
-        if (!Utils.isCdcModule(serviceTypeSymbol.get().getModule().get())) {
-            return false;
+        if (serviceTypeSymbol.isPresent() && serviceTypeSymbol.get().getModule().isEmpty()) {
+            if (!Utils.isCdcModule(serviceTypeSymbol.get().getModule().get())) {
+                return false;
+            }
         }
 
         List<TypeSymbol> listeners = serviceDeclarationSymbol.listenerTypes();
