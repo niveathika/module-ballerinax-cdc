@@ -26,15 +26,18 @@ import io.ballerina.compiler.api.symbols.TypeReferenceTypeSymbol;
 import io.ballerina.compiler.api.symbols.TypeSymbol;
 import io.ballerina.compiler.api.symbols.UnionTypeSymbol;
 import io.ballerina.compiler.syntax.tree.FunctionDefinitionNode;
-import io.ballerina.compiler.syntax.tree.Node;
 import io.ballerina.compiler.syntax.tree.ParameterNode;
 import io.ballerina.compiler.syntax.tree.RequiredParameterNode;
 import io.ballerina.compiler.syntax.tree.ReturnTypeDescriptorNode;
 import io.ballerina.compiler.syntax.tree.SeparatedNodeList;
+import io.ballerina.compiler.syntax.tree.Token;
 import io.ballerina.lib.cdc.compiler.DiagnosticCodes;
 import io.ballerina.lib.cdc.compiler.Utils;
 import io.ballerina.projects.plugins.SyntaxNodeAnalysisContext;
 import io.ballerina.tools.diagnostics.Location;
+import io.ballerina.tools.text.LinePosition;
+import io.ballerina.tools.text.LineRange;
+import io.ballerina.tools.text.TextRange;
 
 import java.util.List;
 import java.util.Optional;
@@ -95,9 +98,8 @@ public class CdcFunctionValidator {
 
         SeparatedNodeList<ParameterNode> parameters = functionDefNode.functionSignature().parameters();
         if (parameters.size() > 1) {
-            reportErrorDiagnostics(INVALID_PARAM_COUNT, functionDefNode.functionSignature().location(),
-                    "'" + functionName + "' must have no parameters or at most one optional " +
-                            "parameter of type 'string'");
+            reportErrorDiagnostics(INVALID_PARAM_COUNT, getParameterLocation(),
+                    "no parameters or at most one optional parameter of type ''string''");
             return;
         }
 
@@ -115,9 +117,8 @@ public class CdcFunctionValidator {
 
         SeparatedNodeList<ParameterNode> parameters = functionDefNode.functionSignature().parameters();
         if (parameters.isEmpty() || parameters.size() > 2) {
-            reportErrorDiagnostics(INVALID_PARAM_COUNT, functionDefNode.functionSignature().location(),
-                    "'" + functionName + "' must have exactly one parameter of type 'record' and " +
-                            "may include an additional parameter of type 'string'");
+            reportErrorDiagnostics(INVALID_PARAM_COUNT, getParameterLocation(), "one parameter of type " +
+                    "''record'' and may include an additional parameter of type ''string''");
             return;
         }
 
@@ -136,9 +137,8 @@ public class CdcFunctionValidator {
 
         SeparatedNodeList<ParameterNode> parameters = functionDefNode.functionSignature().parameters();
         if (parameters.size() < 2 || parameters.size() > 3) {
-            reportErrorDiagnostics(INVALID_PARAM_COUNT, functionDefNode.functionSignature().location(),
-                    "'" + functionName + "' must have exactly two parameters of type 'record' and " +
-                            "may include an additional parameter of type 'string'");
+            reportErrorDiagnostics(INVALID_PARAM_COUNT, getParameterLocation(),
+                    "two parameters of type ''record'' and may include an additional parameter of type ''string''");
             return;
         }
 
@@ -166,7 +166,7 @@ public class CdcFunctionValidator {
         TypeSymbol firstTypeSymbol = ((ParameterSymbol) firstParamSymbolOpt.get()).typeDescriptor();
         TypeSymbol secondTypeSymbol = ((ParameterSymbol) secondParamSymbolOpt.get()).typeDescriptor();
         if (!firstTypeSymbol.equals(secondTypeSymbol)) {
-            reportErrorDiagnostics(NOT_OF_SAME_TYPE, functionDefNode.functionSignature().location(), functionName);
+            reportErrorDiagnostics(NOT_OF_SAME_TYPE, getFirstTwoParameterLocation(), functionName);
         }
     }
 
@@ -177,8 +177,8 @@ public class CdcFunctionValidator {
 
         SeparatedNodeList<ParameterNode> parameters = functionDefNode.functionSignature().parameters();
         if (parameters.size() != 1) {
-            reportErrorDiagnostics(INVALID_PARAM_COUNT, functionDefNode.functionSignature().location(),
-                    "'" + functionName + "' must have exactly one parameter of type 'error?' or 'cdc:Error?'");
+            reportErrorDiagnostics(INVALID_PARAM_COUNT, getParameterLocation(),
+                    "one parameter of type ''error?'' or ''cdc:Error?''");
             return;
         }
 
@@ -221,13 +221,11 @@ public class CdcFunctionValidator {
                     .allMatch(memberType -> memberType.typeKind() == RECORD);
 
             if (!allMembersAreRecords) {
-                reportErrorDiagnostics(INVALID_PARAM_TYPE, requiredParam.location(),
-                        requiredParam.paramName().map(Node::toString).orElse(""), RECORD.getName());
+                reportErrorDiagnostics(INVALID_PARAM_TYPE, requiredParam.typeName().location(), RECORD.getName());
                 return false;
             }
         } else if (actualTypeDesc != RECORD) {
-            reportErrorDiagnostics(INVALID_PARAM_TYPE, requiredParam.typeName().location(),
-                    requiredParam.paramName().map(Node::toString).orElse(""), RECORD.getName());
+            reportErrorDiagnostics(INVALID_PARAM_TYPE, requiredParam.typeName().location(), RECORD.getName());
             return false;
         }
         return true;
@@ -247,8 +245,7 @@ public class CdcFunctionValidator {
         TypeSymbol typeSymbol = ((ParameterSymbol) typeSymbolOpt.get()).typeDescriptor();
         TypeDescKind actualTypeDesc = typeSymbol.typeKind();
         if (actualTypeDesc != STRING) {
-            reportErrorDiagnostics(INVALID_PARAM_TYPE, requiredParam.typeName().location(),
-                    requiredParam.paramName().map(Node::toString).orElse(""), STRING.getName());
+            reportErrorDiagnostics(INVALID_PARAM_TYPE, requiredParam.typeName().location(), STRING.getName());
         }
     }
 
@@ -267,14 +264,10 @@ public class CdcFunctionValidator {
         if (typeSymbol.typeKind() == TYPE_REFERENCE) {
             if (!typeSymbol.getName().orElse("").equals(ERROR_PARAM) ||
                     !isCdcModule(typeSymbol.getModule().orElse(null))) {
-                reportErrorDiagnostics(INVALID_PARAM_TYPE, parameterNode.location(),
-                        requiredParam.paramName().map(Node::toString).orElse(""),
-                        "error' or 'cdc:Error");
+                reportErrorDiagnostics(INVALID_PARAM_TYPE, parameterNode.location(), "error'' or ''cdc:Error");
             }
         } else if (typeSymbol.typeKind() != ERROR) {
-            reportErrorDiagnostics(INVALID_PARAM_TYPE, parameterNode.location(),
-                    requiredParam.paramName().map(Node::toString).orElse(""),
-                    "error?' or 'cdc:Error?");
+            reportErrorDiagnostics(INVALID_PARAM_TYPE, requiredParam.typeName().location(), "error?'' or ''cdc:Error?");
         }
     }
 
@@ -305,9 +298,10 @@ public class CdcFunctionValidator {
                 returnTypeDescriptorNode.get().type().kind() == OPTIONAL_TYPE_DESC) {
             List<TypeSymbol> returnTypeMembers = ((UnionTypeSymbol) returnTypeOpt.get()).memberTypeDescriptors();
             returnTypeMembers.forEach(
-                    member -> validateErrorReturnSymbol(member, returnTypeDescriptorNode.get().location()));
+                    member -> validateErrorReturnSymbol(member,
+                            returnTypeDescriptorNode.get().type().location()));
         } else {
-            validateErrorReturnSymbol(returnTypeOpt.get(), returnTypeDescriptorNode.get().location());
+            validateErrorReturnSymbol(returnTypeOpt.get(), returnTypeDescriptorNode.get().type().location());
         }
     }
 
@@ -320,5 +314,54 @@ public class CdcFunctionValidator {
         } else if (returnType.typeKind() != TypeDescKind.NIL && returnType.typeKind() != TypeDescKind.ERROR) {
             reportErrorDiagnostics(INVALID_RETURN_TYPE_ERROR_OR_NIL, location, functionName);
         }
+    }
+
+    private Location getParameterLocation() {
+        Token openParenToken = functionDefNode.functionSignature().openParenToken();
+        Token closeParenToken = functionDefNode.functionSignature().closeParenToken();
+
+        LineRange lineRange = LineRange.from(
+                functionDefNode.lineRange().fileName(),
+                LinePosition.from(
+                        openParenToken.lineRange().startLine().line(),
+                        openParenToken.lineRange().startLine().offset()
+                ),
+                LinePosition.from(
+                        closeParenToken.lineRange().endLine().line(),
+                        closeParenToken.lineRange().endLine().offset()
+                )
+        );
+
+        int textRangeStartOffset = openParenToken.textRange().startOffset();
+        int textRangeEndOffset = closeParenToken.textRange().endOffset();
+        TextRange textRange = TextRange.from(textRangeStartOffset, textRangeEndOffset - textRangeStartOffset);
+
+        return new ParametersLocation(lineRange, textRange);
+    }
+
+    private Location getFirstTwoParameterLocation() {
+        ParameterNode firstParam = functionDefNode.functionSignature().parameters().get(0);
+        ParameterNode secondParam = functionDefNode.functionSignature().parameters().get(1);
+
+        LineRange lineRange = LineRange.from(
+                functionDefNode.lineRange().fileName(),
+                LinePosition.from(
+                        firstParam.lineRange().startLine().line(),
+                        firstParam.lineRange().startLine().offset()
+                ),
+                LinePosition.from(
+                        secondParam.lineRange().endLine().line(),
+                        secondParam.lineRange().endLine().offset()
+                )
+        );
+
+        int textRangeStartOffset = firstParam.textRange().startOffset();
+        int textRangeEndOffset = secondParam.textRange().endOffset();
+        TextRange textRange = TextRange.from(textRangeStartOffset, textRangeEndOffset - textRangeStartOffset);
+
+        return new ParametersLocation(lineRange, textRange);
+    }
+
+    public record ParametersLocation(LineRange lineRange, TextRange textRange) implements Location {
     }
 }

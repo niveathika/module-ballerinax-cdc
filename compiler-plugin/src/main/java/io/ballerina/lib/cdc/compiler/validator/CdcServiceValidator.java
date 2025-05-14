@@ -106,8 +106,8 @@ public record CdcServiceValidator(SyntaxNodeAnalysisContext context) {
         context.reportDiagnostic(createDiagnostic(diagnosticInfo, node.location()));
 
         String validFunctions = isPostgresListener ?
-                "'onRead', 'onCreate', 'onUpdate', 'onDelete' or 'onTruncate'" :
-                "'onRead', 'onCreate', 'onUpdate' or 'onDelete'";
+                "''onRead'', ''onCreate'', ''onUpdate'', ''onDelete'' or ''onTruncate''" :
+                "''onRead'', ''onCreate'', ''onUpdate'' or ''onDelete''";
         context.reportDiagnostic(Utils.createDiagnostic(NO_VALID_FUNCTION, node.location(), validFunctions));
     }
 
