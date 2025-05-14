@@ -26,6 +26,10 @@ public final class Constants {
     public static final String TAB = "    ";
     public static final String CODE_TEMPLATE_NAME = "ADD_FUNCTIONS_CODE_SNIPPET";
     public static final String CODE_TEMPLATE_NAME_WITH_TABLE_NAME = "ADD_FUNCTIONS_W_TABLE_NAME_CODE_SNIPPET";
+    public static final String MAKE_FUNCTION_REMOTE = "MAKE_FUNCTION_REMOTE";
+    public static final String CHANGE_RETURN_TYPE_TO_CDC_ERROR = "CHANGE_RETURN_TYPE_CDC:ERROR?";
+    public static final String CHANGE_RETURN_TYPE_TO_ERROR = "CHANGE_RETURN_TYPE_ERROR?";
+
     private Constants() {   // Prevent instantiation
     }
 }
