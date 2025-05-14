@@ -33,20 +33,20 @@ import static io.ballerina.lib.cdc.compiler.Constants.LS;
 public class CdcCodeTemplate extends AbstractCdcCodeTemplate {
 
     private static final String ON_READ_FUNCTION_TEXT = LS +
-            "\tremote function onRead(record {|anydata...;|} after) returns cdc:Error? {" + LS + LS + "\t}" + LS;
+            "    remote function onRead(record {|anydata...;|} after) returns cdc:Error? {" + LS + LS + "    }" + LS;
 
     private static final String ON_CREATE_FUNCTION_TEXT = LS +
-            "\tremote function onCreate(record {|anydata...;|} after) returns cdc:Error? {" + LS + LS + "\t}" + LS;
+            "    remote function onCreate(record {|anydata...;|} after) returns cdc:Error? {" + LS + LS + "    }" + LS;
 
     private static final String ON_UPDATE_FUNCTION_TEXT = LS +
-            "\tremote function onUpdate(record {|anydata...;|} before, record {|anydata...;|} after) " +
-            "returns cdc:Error? {" + LS + LS + "\t}" + LS;
+            "    remote function onUpdate(record {|anydata...;|} before, record {|anydata...;|} after) " +
+            "returns cdc:Error? {" + LS + LS + "    }" + LS;
 
     private static final String ON_DELETE_FUNCTION_TEXT = LS +
-            "\tremote function onDelete(record {|anydata...;|} before) returns cdc:Error? {" + LS + LS + "\t}" + LS;
+            "    remote function onDelete(record {|anydata...;|} before) returns cdc:Error? {" + LS + LS + "    }" + LS;
 
     private static final String ON_TRUNCATE_FUNCTION_TEXT = LS +
-            "\tremote function onTruncate() returns cdc:Error? {" + LS + LS + "\t}" + LS;
+            "    remote function onTruncate() returns cdc:Error? {" + LS + LS + "    }" + LS;
 
     @Override
     protected List<TextEdit> generateTextEdits(ServiceDeclarationNode serviceDeclarationNode,
