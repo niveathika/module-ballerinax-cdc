@@ -84,8 +84,8 @@ public final class Utils {
         return ((ModulePartNode) syntaxTree.rootNode()).findNode(TextRange.from(start, end - start), true);
     }
 
-    public  static <T> T extractArgument(CodeActionExecutionContext context, String key, Class<T> type,
-                                  T defaultValue) {
+    public static <T> T extractArgument(CodeActionExecutionContext context, String key, Class<T> type,
+                                        T defaultValue) {
         return context.arguments().stream()
                 .filter(arg -> key.equals(arg.key()))
                 .map(arg -> arg.valueAs(type))

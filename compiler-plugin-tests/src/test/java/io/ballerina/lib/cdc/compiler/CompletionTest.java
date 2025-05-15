@@ -17,18 +17,7 @@
  */
 package io.ballerina.lib.cdc.compiler;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.List;
-
-import org.testng.Assert;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
-
 import com.google.gson.Gson;
-
 import io.ballerina.compiler.syntax.tree.ModulePartNode;
 import io.ballerina.compiler.syntax.tree.NonTerminalNode;
 import io.ballerina.projects.CompletionManager;
@@ -45,6 +34,15 @@ import io.ballerina.projects.plugins.completion.CompletionException;
 import io.ballerina.projects.plugins.completion.CompletionItem;
 import io.ballerina.tools.text.LinePosition;
 import io.ballerina.tools.text.TextRange;
+import org.testng.Assert;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
 
 public class CompletionTest {
 

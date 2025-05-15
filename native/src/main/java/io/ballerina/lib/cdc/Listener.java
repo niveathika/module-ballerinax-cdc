@@ -92,7 +92,7 @@ public class Listener {
     }
 
     private static void handleUnAnnotatedServiceAttachment(Object serviceMap, Map<String, Service> updatedServiceMap,
-                                                      BObject service) {
+                                                           BObject service) {
         if (serviceMap != null) {
             throw createError(BallerinaErrors.OPERATION_NOT_PERMITTED_ERROR, "The 'cdc:ServiceConfig' annotation " +
                     "is mandatory when attaching multiple services to the 'cdc:Listener'.");
