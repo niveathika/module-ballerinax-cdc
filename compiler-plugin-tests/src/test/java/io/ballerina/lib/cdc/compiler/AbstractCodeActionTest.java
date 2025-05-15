@@ -51,12 +51,13 @@ public abstract class AbstractCodeActionTest {
 
     private static final Gson GSON = new Gson();
 
-    protected void performTest(Path filePath, LinePosition cursorPos, CodeActionInfo expected, Path expectedSrc)
+    protected void performTest(Path filePath, LinePosition cursorPos, int expectedCodeAction,
+                               CodeActionInfo expected, Path expectedSrc)
             throws IOException {
         Project project = ProjectLoader.loadProject(filePath, getEnvironmentBuilder());
         List<CodeActionInfo> codeActions = getCodeActions(filePath, cursorPos, project);
 
-        Assert.assertTrue(codeActions.size() > 1, "Expect at least 2 code actions");
+        Assert.assertTrue(codeActions.size() >= expectedCodeAction, "Expect at least 2 code actions");
 
         Optional<CodeActionInfo> found = findCodeAction(codeActions, expected);
         Assert.assertTrue(found.isPresent(), "Code action not found: " + GSON.toJson(expected));
@@ -137,6 +138,6 @@ public abstract class AbstractCodeActionTest {
     }
 
     private String readExpectedSourceCode(Path expectedSrc) throws IOException {
-        return Files.readString(expectedSrc);
+        return Files.readString(expectedSrc).replace(System.lineSeparator(), "\n");
     }
 }
