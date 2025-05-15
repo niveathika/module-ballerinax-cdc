@@ -40,7 +40,6 @@ import static io.ballerina.lib.cdc.compiler.DiagnosticCodes.EMPTY_SERVICE_POSTGR
 import static io.ballerina.lib.cdc.compiler.DiagnosticCodes.INVALID_RESOURCE_FUNCTION;
 import static io.ballerina.lib.cdc.compiler.DiagnosticCodes.NO_VALID_FUNCTION;
 import static io.ballerina.lib.cdc.compiler.Utils.getMethodSymbol;
-import static io.ballerina.lib.cdc.compiler.Utils.isRemoteFunction;
 import static io.ballerina.tools.diagnostics.DiagnosticFactory.createDiagnostic;
 import static io.ballerina.tools.diagnostics.DiagnosticSeverity.INTERNAL;
 
@@ -64,12 +63,12 @@ public record CdcServiceValidator(SyntaxNodeAnalysisContext context) {
         TypeSymbol listener = listenerOpt.get();
         boolean isPostgresListener = isPostgresListener(listener);
 
-        boolean hasValidRemoteFunction = serviceDeclarationNode.members().stream()
+        boolean hasValidFunction = serviceDeclarationNode.members().stream()
                 .filter(node -> node.kind() == OBJECT_METHOD_DEFINITION)
                 .map(FunctionDefinitionNode.class::cast)
-                .anyMatch(functionNode -> isValidRemoteFunction(functionNode, isPostgresListener));
+                .anyMatch(functionNode -> isValidFunction(functionNode, isPostgresListener));
 
-        if (serviceDeclarationNode.members().isEmpty() || !hasValidRemoteFunction) {
+        if (serviceDeclarationNode.members().isEmpty() || !hasValidFunction) {
             reportEmptyServiceDiagnostics(serviceDeclarationNode, isPostgresListener);
         }
 
@@ -86,9 +85,9 @@ public record CdcServiceValidator(SyntaxNodeAnalysisContext context) {
         return listener.getName().map(POSTGRES_LISTENER_NAME::equals).orElse(false);
     }
 
-    private boolean isValidRemoteFunction(FunctionDefinitionNode functionNode, boolean isPostgresListener) {
+    private boolean isValidFunction(FunctionDefinitionNode functionNode, boolean isPostgresListener) {
         Optional<MethodSymbol> methodSymbolOpt = getMethodSymbol(context.semanticModel(), functionNode);
-        if (methodSymbolOpt.isEmpty() || !isRemoteFunction(methodSymbolOpt.get())) {
+        if (methodSymbolOpt.isEmpty()) {
             return false;
         }
 
