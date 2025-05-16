@@ -25,6 +25,7 @@ import io.ballerina.compiler.syntax.tree.FunctionDefinitionNode;
 import io.ballerina.compiler.syntax.tree.ModulePartNode;
 import io.ballerina.compiler.syntax.tree.NonTerminalNode;
 import io.ballerina.compiler.syntax.tree.SyntaxTree;
+import io.ballerina.projects.plugins.codeaction.CodeActionExecutionContext;
 import io.ballerina.tools.diagnostics.Diagnostic;
 import io.ballerina.tools.diagnostics.DiagnosticFactory;
 import io.ballerina.tools.diagnostics.DiagnosticInfo;
@@ -83,4 +84,12 @@ public final class Utils {
         return ((ModulePartNode) syntaxTree.rootNode()).findNode(TextRange.from(start, end - start), true);
     }
 
+    public static <T> T extractArgument(CodeActionExecutionContext context, String key, Class<T> type,
+                                        T defaultValue) {
+        return context.arguments().stream()
+                .filter(arg -> key.equals(arg.key()))
+                .map(arg -> arg.valueAs(type))
+                .findFirst()
+                .orElse(defaultValue);
+    }
 }

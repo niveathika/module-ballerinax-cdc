@@ -17,10 +17,19 @@
  */
 package io.ballerina.lib.cdc.compiler;
 
+import io.ballerina.compiler.syntax.tree.Node;
 import io.ballerina.lib.cdc.compiler.codeaction.CdcCodeTemplate;
 import io.ballerina.lib.cdc.compiler.codeaction.CdcCodeTemplateWithTableName;
+import io.ballerina.lib.cdc.compiler.codeaction.ChangeReturnTypeToCdcError;
+import io.ballerina.lib.cdc.compiler.codeaction.ChangeReturnTypeToError;
+import io.ballerina.lib.cdc.compiler.codeaction.ChangeToRemoteMethod;
+import io.ballerina.lib.cdc.compiler.completion.CdcServiceBodyContextProvider;
 import io.ballerina.projects.plugins.CompilerPlugin;
 import io.ballerina.projects.plugins.CompilerPluginContext;
+import io.ballerina.projects.plugins.codeaction.CodeAction;
+import io.ballerina.projects.plugins.completion.CompletionProvider;
+
+import java.util.List;
 
 /**
  * This is the compiler plugin for Ballerina Cdc package.
@@ -29,7 +38,20 @@ public class CdcCompilerPlugin extends CompilerPlugin {
     @Override
     public void init(CompilerPluginContext compilerPluginContext) {
         compilerPluginContext.addCodeAnalyzer(new CdcCodeAnalyzer());
-        compilerPluginContext.addCodeAction(new CdcCodeTemplate());
-        compilerPluginContext.addCodeAction(new CdcCodeTemplateWithTableName());
+        getCodeActions().forEach(compilerPluginContext::addCodeAction);
+        getCompletionProviders().forEach(compilerPluginContext::addCompletionProvider);
+    }
+
+    private List<CodeAction> getCodeActions() {
+        return List.of(
+                new CdcCodeTemplate(),
+                new CdcCodeTemplateWithTableName(),
+                new ChangeToRemoteMethod(),
+                new ChangeReturnTypeToCdcError(),
+                new ChangeReturnTypeToError());
+    }
+
+    private List<CompletionProvider<? extends Node>> getCompletionProviders() {
+        return List.of(new CdcServiceBodyContextProvider());
     }
 }

@@ -38,9 +38,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import static io.ballerina.lib.cdc.compiler.Constants.IS_POSTGRES_LISTENER;
-import static io.ballerina.lib.cdc.compiler.Constants.NODE_LOCATION;
+import static io.ballerina.lib.cdc.compiler.Utils.extractArgument;
 import static io.ballerina.lib.cdc.compiler.Utils.findNode;
+import static io.ballerina.lib.cdc.compiler.codeaction.Constants.IS_POSTGRES_LISTENER;
+import static io.ballerina.lib.cdc.compiler.codeaction.Constants.NODE_LOCATION;
 
 /**
  * Abstract class for CDC code templates to share common functionality.
@@ -88,14 +89,6 @@ public abstract class AbstractCdcCodeTemplate implements CodeAction {
         TextDocumentChange change = TextDocumentChange.from(textEdits.toArray(new TextEdit[0]));
         return List.of(new DocumentEdit(context.fileUri(),
                 SyntaxTree.from(syntaxTree, change)));
-    }
-
-    protected <T> T extractArgument(CodeActionExecutionContext context, String key, Class<T> type, T defaultValue) {
-        return context.arguments().stream()
-                .filter(arg -> key.equals(arg.key()))
-                .map(arg -> arg.valueAs(type))
-                .findFirst()
-                .orElse(defaultValue);
     }
 
     protected TextRange calculateTextRange(ServiceDeclarationNode serviceDeclarationNode) {

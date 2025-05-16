@@ -19,39 +19,32 @@ package io.ballerina.lib.cdc.compiler;
 
 import java.util.List;
 
-import static io.ballerina.lib.cdc.compiler.Constants.ServiceMethodNames.ON_CREATE;
-import static io.ballerina.lib.cdc.compiler.Constants.ServiceMethodNames.ON_DELETE;
-import static io.ballerina.lib.cdc.compiler.Constants.ServiceMethodNames.ON_READ;
-import static io.ballerina.lib.cdc.compiler.Constants.ServiceMethodNames.ON_TRUNCATE;
-import static io.ballerina.lib.cdc.compiler.Constants.ServiceMethodNames.ON_UPDATE;
-
-public class Constants {
+public final class Constants {
     public static final String PACKAGE_ORG = "ballerinax";
     public static final String PACKAGE_PREFIX = "cdc";
 
     // Parameters
     public static final String ERROR_PARAM = "Error";
 
-    // Code template related constants
-    public static final String NODE_LOCATION = "node.location";
-    public static final String IS_POSTGRES_LISTENER = "is.postgres.listener";
-
-    public static final String LS = System.lineSeparator();
-    public static final String CODE_TEMPLATE_NAME = "ADD_FUNCTIONS_CODE_SNIPPET";
-    public static final String CODE_TEMPLATE_NAME_WITH_TABLE_NAME = "ADD_FUNCTIONS_W_TABLE_NAME_CODE_SNIPPET";
-
     public static final String POSTGRES_LISTENER_NAME = "PostgreSqlListener";
     public static final List<String> VALID_FUNCTIONS = List.of(
-            ON_READ, ON_CREATE, ON_DELETE, ON_UPDATE, ON_TRUNCATE
+            ServiceMethodNames.ON_READ,
+            ServiceMethodNames.ON_CREATE,
+            ServiceMethodNames.ON_DELETE,
+            ServiceMethodNames.ON_UPDATE,
+            ServiceMethodNames.ON_TRUNCATE
     );
     public static final List<String> VALID_FUNCTIONS_NON_POSTGRES = List.of(
-            ON_READ, ON_CREATE, ON_DELETE, ON_UPDATE
+            ServiceMethodNames.ON_READ,
+            ServiceMethodNames.ON_CREATE,
+            ServiceMethodNames.ON_DELETE,
+            ServiceMethodNames.ON_UPDATE
     );
 
     private Constants() {
     }
 
-    public static class ServiceMethodNames {
+    public static final class ServiceMethodNames {
         public static final String ON_READ = "onRead";
         public static final String ON_CREATE = "onCreate";
         public static final String ON_UPDATE = "onUpdate";

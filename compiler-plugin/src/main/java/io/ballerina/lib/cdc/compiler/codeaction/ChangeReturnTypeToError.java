@@ -15,16 +15,23 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package io.ballerina.lib.cdc.compiler;
+package io.ballerina.lib.cdc.compiler.codeaction;
 
-import io.ballerina.compiler.syntax.tree.SyntaxKind;
-import io.ballerina.lib.cdc.compiler.validator.CdcServiceAnalysisTask;
-import io.ballerina.projects.plugins.CodeAnalysisContext;
-import io.ballerina.projects.plugins.CodeAnalyzer;
+import static io.ballerina.lib.cdc.compiler.codeaction.Constants.CHANGE_RETURN_TYPE_TO_ERROR;
 
-public class CdcCodeAnalyzer extends CodeAnalyzer {
+public class ChangeReturnTypeToError extends AbstractChangeReturnType {
     @Override
-    public void init(CodeAnalysisContext context) {
-        context.addSyntaxNodeAnalysisTask(new CdcServiceAnalysisTask(), SyntaxKind.SERVICE_DECLARATION);
+    protected String getCodeActionDescription() {
+        return "Change return type to error?";
+    }
+
+    @Override
+    protected String getChangedReturnSignature() {
+        return "error?";
+    }
+
+    @Override
+    public String name() {
+        return CHANGE_RETURN_TYPE_TO_ERROR;
     }
 }

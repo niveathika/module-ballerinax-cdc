@@ -1,0 +1,29 @@
+{
+  "items": [
+    {
+      "label": "remote function onRead()",
+      "insertText": "remote function onRead(${1:record {|anydata...;|}} after) ${2}{\n\t${3}\n}",
+      "priority": "HIGH"
+    },
+    {
+      "label": "remote function onCreate()",
+      "insertText": "remote function onCreate(${1:record {|anydata...;|}} after) ${2}{\n\t${3}\n}",
+      "priority": "HIGH"
+    },
+    {
+      "label": "remote function onDelete()",
+      "insertText": "remote function onDelete(${1:record {|anydata...;|}} before) ${2}{\n\t${3}\n}",
+      "priority": "HIGH"
+    },
+    {
+      "label": "remote function onUpdate()",
+      "insertText": "remote function onUpdate(${1:record {|anydata...;|}} before, ${2:record {|anydata...;|}} after) ${3}{\n\t${4}\n}",
+      "priority": "HIGH"
+    },
+    {
+      "label": "remote function onTruncate()",
+      "insertText": "remote function onTruncate() ${1}{\n\t${2}\n}",
+      "priority": "HIGH"
+    }
+  ]
+}

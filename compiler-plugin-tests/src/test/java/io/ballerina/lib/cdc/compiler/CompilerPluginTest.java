@@ -43,8 +43,8 @@ import static io.ballerina.lib.cdc.compiler.TestUtils.getEnvironmentBuilder;
  */
 public class CompilerPluginTest {
 
-    private static final Path RESOURCE_DIRECTORY = Paths.get("src", "test", "resources", "diagnostics")
-            .toAbsolutePath();
+    private static final Path RESOURCE_DIRECTORY =
+            Paths.get("src", "test", "resources", "diagnostics").toAbsolutePath();
 
     private PackageCompilation loadAndCompilePackage(String path) {
         Path projectDirPath = RESOURCE_DIRECTORY.resolve(path);
@@ -56,13 +56,15 @@ public class CompilerPluginTest {
         Assert.assertEquals(diagnosticResult.errors().size(), expectedErrors.length);
         Diagnostic[] diagnostics = diagnosticResult.errors().toArray(new Diagnostic[0]);
         for (int i = 0; i < expectedErrors.length; i++) {
-            if (expectedErrors[i].length != 2) {
-                continue;
-            }
-            String expectedCode = ((DiagnosticCodes) expectedErrors[i][0]).getCode();
+            String expectedCode =
+                    expectedErrors[i][0] instanceof String ?
+                            (String) expectedErrors[i][0] :
+                            ((DiagnosticCodes) expectedErrors[i][0]).getCode();
             String expectedMessage = (String) expectedErrors[i][1];
+            String location = (String) expectedErrors[i][2];
             Assert.assertEquals(diagnostics[i].diagnosticInfo().code(), expectedCode);
             Assert.assertEquals(diagnostics[i].diagnosticInfo().messageFormat(), expectedMessage);
+            Assert.assertEquals(diagnostics[i].location().lineRange().toString(), location);
         }
     }
 
@@ -136,7 +138,7 @@ public class CompilerPluginTest {
         Assert.assertEquals(diagnosticResult.errors().size(), 0);
     }
 
-    @Test(description = "Validate applying to only cdc listenerr")
+    @Test(description = "Validate applying to only cdc listener")
     public void testValidService11() {
         PackageCompilation currentPackage = loadAndCompilePackage("valid_service_11");
         DiagnosticResult diagnosticResult = currentPackage.diagnosticResult();
@@ -148,12 +150,18 @@ public class CompilerPluginTest {
         PackageCompilation currentPackage = loadAndCompilePackage("invalid_service_1");
         DiagnosticResult diagnosticResult = currentPackage.diagnosticResult();
         assertDiagnostics(diagnosticResult, new Object[][]{
-                {NO_VALID_FUNCTION,
-                        "Service must have at least one remote 'onRead', " +
-                                "'onCreate', 'onUpdate' or 'onDelete' functions."},
-                {NO_VALID_FUNCTION,
-                        "Service must have at least one remote 'onRead', " +
-                                "'onCreate', 'onUpdate', 'onDelete' or 'onTruncate' functions."}
+                {
+                        NO_VALID_FUNCTION,
+                        "missing valid remote function: expected at least one of " +
+                                "''onRead'', ''onCreate'', ''onUpdate'' or ''onDelete'' functions",
+                        "(23:0,24:1)"
+                },
+                {
+                        NO_VALID_FUNCTION,
+                        "missing valid remote function: expected at least one of " +
+                                "''onRead'', ''onCreate'', ''onUpdate'', ''onDelete'' or ''onTruncate'' functions",
+                        "(32:0,33:1)"
+                }
         });
     }
 
@@ -162,9 +170,16 @@ public class CompilerPluginTest {
         PackageCompilation currentPackage = loadAndCompilePackage("invalid_service_2");
         DiagnosticResult diagnosticResult = currentPackage.diagnosticResult();
         assertDiagnostics(diagnosticResult, new Object[][]{
-                {},
-                {}
-        });
+                {
+                        "BCE2063",
+                        "missing.required.parameter",
+                        "(18:41,21:2)"
+                },
+                {
+                        "BCE2039",
+                        "undefined.parameter",
+                        "(18:46,21:1)"
+                }});
     }
 
     @Test(description = "Validate onRead without remote keyword")
@@ -172,8 +187,11 @@ public class CompilerPluginTest {
         PackageCompilation currentPackage = loadAndCompilePackage("invalid_service_3");
         DiagnosticResult diagnosticResult = currentPackage.diagnosticResult();
         assertDiagnostics(diagnosticResult, new Object[][]{
-                {FUNCTION_SHOULD_BE_REMOTE,
-                        "Invalid function: The function 'onRead' must be declared as a remote function."}
+                {
+                        FUNCTION_SHOULD_BE_REMOTE,
+                        "must be a ''remote'' function",
+                        "(25:4,27:5)"
+                }
         });
     }
 
@@ -182,8 +200,16 @@ public class CompilerPluginTest {
         PackageCompilation currentPackage = loadAndCompilePackage("invalid_service_4");
         DiagnosticResult diagnosticResult = currentPackage.diagnosticResult();
         assertDiagnostics(diagnosticResult, new Object[][]{
-                {INVALID_PARAM_TYPE, "Invalid parameter type: The parameter 'before' must be of type 'record'."},
-                {INVALID_PARAM_TYPE, "Invalid parameter type: The parameter 'before' must be of type 'record'."}
+                {
+                        INVALID_PARAM_TYPE,
+                        "invalid type: expected ''record''",
+                        "(25:27,25:33)"
+                },
+                {
+                        INVALID_PARAM_TYPE,
+                        "invalid type: expected ''record''",
+                        "(29:29,29:37)"
+                }
         });
     }
 
@@ -192,15 +218,46 @@ public class CompilerPluginTest {
         PackageCompilation currentPackage = loadAndCompilePackage("invalid_service_5");
         DiagnosticResult diagnosticResult = currentPackage.diagnosticResult();
         assertDiagnostics(diagnosticResult, new Object[][]{
-                {INVALID_PARAM_TYPE, "Invalid parameter type: The parameter 'before' must be of type 'record'."},
-                {INVALID_PARAM_TYPE, "Invalid parameter type: The parameter 'after' must be of type 'record'."},
-                {INVALID_PARAM_TYPE, "Invalid parameter type: The parameter 'before' must be of type 'record'."},
-                {INVALID_PARAM_TYPE, "Invalid parameter type: The parameter 'after' must be of type 'record'."},
-                {INVALID_PARAM_TYPE, "Invalid parameter type: The parameter 'before' must be of type 'record'."},
-                {INVALID_PARAM_TYPE, "Invalid parameter type: The parameter 'after' must be of type 'record'."},
-                {INVALID_PARAM_TYPE, "Invalid parameter type: The parameter 'after' must be of type 'record'."},
-                {NOT_OF_SAME_TYPE,
-                        "Invalid parameter type: The function 'onUpdate' must have parameters of the same type."}
+                {
+                        INVALID_PARAM_TYPE,
+                        "invalid type: expected ''record''",
+                        "(25:29,25:35)"
+                },
+                {
+                        INVALID_PARAM_TYPE,
+                        "invalid type: expected ''record''",
+                        "(31:49,31:55)"
+                },
+                {
+                        INVALID_PARAM_TYPE,
+                        "invalid type: expected ''record''",
+                        "(37:29,37:35)"
+                },
+                {
+                        INVALID_PARAM_TYPE,
+                        "invalid type: expected ''record''",
+                        "(37:44,37:50)"
+                },
+                {
+                        INVALID_PARAM_TYPE,
+                        "invalid type: expected ''record''",
+                        "(43:29,43:35)"
+                },
+                {
+                        INVALID_PARAM_TYPE,
+                        "invalid type: expected ''record''",
+                        "(43:44,43:52)"
+                },
+                {
+                        INVALID_PARAM_TYPE,
+                        "invalid type: expected ''record''",
+                        "(51:49,51:69)"
+                },
+                {
+                        NOT_OF_SAME_TYPE,
+                        "invalid type: must be of the same type",
+                        "(61:29,61:74)"
+                }
         });
     }
 
@@ -209,8 +266,11 @@ public class CompilerPluginTest {
         PackageCompilation currentPackage = loadAndCompilePackage("invalid_service_6");
         DiagnosticResult diagnosticResult = currentPackage.diagnosticResult();
         assertDiagnostics(diagnosticResult, new Object[][]{
-                {INVALID_RETURN_TYPE_ERROR_OR_NIL,
-                        "Invalid return type: The function 'onUpdate' must return either 'error?' or 'cdc:Error?'."}
+                {
+                        INVALID_RETURN_TYPE_ERROR_OR_NIL,
+                        "invalid return type: expected ''error?'' or ''cdc:Error?''",
+                        "(24:76,24:82)"
+                }
         });
     }
 
@@ -219,7 +279,24 @@ public class CompilerPluginTest {
         PackageCompilation currentPackage = loadAndCompilePackage("invalid_service_7");
         DiagnosticResult diagnosticResult = currentPackage.diagnosticResult();
         assertDiagnostics(diagnosticResult, new Object[][]{
-                {INVALID_PARAM_TYPE, "Invalid parameter type: The parameter 'tableName' must be of type 'string'."}
+                {
+                        INVALID_PARAM_TYPE,
+                        "invalid type: expected ''string''",
+                        "(24:68,24:72)"
+                }
+        });
+    }
+
+    @Test(description = "Validate onUpdate has same type")
+    public void testInvalidService8() {
+        PackageCompilation currentPackage = loadAndCompilePackage("invalid_service_8");
+        DiagnosticResult diagnosticResult = currentPackage.diagnosticResult();
+        assertDiagnostics(diagnosticResult, new Object[][]{
+                {
+                        NOT_OF_SAME_TYPE,
+                        "invalid type: must be of the same type",
+                        "(24:29,24:56)"
+                }
         });
     }
 
@@ -228,8 +305,11 @@ public class CompilerPluginTest {
         PackageCompilation currentPackage = loadAndCompilePackage("invalid_service_9");
         DiagnosticResult diagnosticResult = currentPackage.diagnosticResult();
         assertDiagnostics(diagnosticResult, new Object[][]{
-                {INVALID_MULTIPLE_LISTENERS,
-                        "Invalid service attachment: The service can only be attached to one 'cdc:Listener'."}
+                {
+                        INVALID_MULTIPLE_LISTENERS,
+                        "service can only be attached to one ''cdc:Listener''",
+                        "(28:0,32:1)"
+                }
         });
     }
 
@@ -238,7 +318,11 @@ public class CompilerPluginTest {
         PackageCompilation currentPackage = loadAndCompilePackage("invalid_service_10");
         DiagnosticResult diagnosticResult = currentPackage.diagnosticResult();
         assertDiagnostics(diagnosticResult, new Object[][]{
-                {INVALID_RESOURCE_FUNCTION, "Invalid resource function: Resource functions are not allowed."}
+                {
+                        INVALID_RESOURCE_FUNCTION,
+                        "resource functions are not allowed",
+                        "(25:4,27:5)"
+                }
         });
     }
 
@@ -247,15 +331,24 @@ public class CompilerPluginTest {
         PackageCompilation currentPackage = loadAndCompilePackage("invalid_service_11");
         DiagnosticResult diagnosticResult = currentPackage.diagnosticResult();
         assertDiagnostics(diagnosticResult, new Object[][]{
-                {INVALID_PARAM_COUNT,
-                        "Invalid parameter count: The function 'onCreate' must have exactly one parameter of type " +
-                                "'record' and may include an additional parameter of type 'string'."},
-                {INVALID_PARAM_COUNT,
-                        "Invalid parameter count: The function 'onUpdate' must have exactly two parameters of type " +
-                                "'record' and may include an additional parameter of type 'string'."},
-                {INVALID_PARAM_COUNT,
-                        "Invalid parameter count: The function 'onUpdate' must have exactly two parameters of type " +
-                                "'record' and may include an additional parameter of type 'string'."}
+                {
+                        INVALID_PARAM_COUNT,
+                        "invalid parameter count: expected one parameter of type ''record'' and " +
+                                "may include an additional parameter of type ''string''",
+                        "(24:28,24:30)"
+                },
+                {
+                        INVALID_PARAM_COUNT,
+                        "invalid parameter count: expected two parameters of type ''record'' and " +
+                                "may include an additional parameter of type ''string''",
+                        "(27:28,27:30)"
+                },
+                {
+                        INVALID_PARAM_COUNT,
+                        "invalid parameter count: expected two parameters of type ''record'' and " +
+                                "may include an additional parameter of type ''string''",
+                        "(32:28,32:48)"
+                }
         });
     }
 
@@ -264,7 +357,11 @@ public class CompilerPluginTest {
         PackageCompilation currentPackage = loadAndCompilePackage("invalid_service_12");
         DiagnosticResult diagnosticResult = currentPackage.diagnosticResult();
         assertDiagnostics(diagnosticResult, new Object[][]{
-                {MUST_BE_REQUIRED_PARAM, "Invalid parameter: The parameter 'tableName' must be a required parameter."}
+                {
+                        MUST_BE_REQUIRED_PARAM,
+                        "must be a required parameter",
+                        "(24:47,24:68)"
+                }
         });
     }
 
@@ -273,8 +370,11 @@ public class CompilerPluginTest {
         PackageCompilation currentPackage = loadAndCompilePackage("invalid_service_14");
         DiagnosticResult diagnosticResult = currentPackage.diagnosticResult();
         assertDiagnostics(diagnosticResult, new Object[][]{
-                {INVALID_PARAM_TYPE,
-                        "Invalid parameter type: The parameter 'before' must be of type 'error?' or 'cdc:Error?'."}
+                {
+                        INVALID_PARAM_TYPE,
+                        "invalid type: expected ''error?'' or ''cdc:Error?''",
+                        "(28:28,28:39)"
+                }
         });
     }
 
@@ -283,9 +383,11 @@ public class CompilerPluginTest {
         PackageCompilation currentPackage = loadAndCompilePackage("invalid_service_15");
         DiagnosticResult diagnosticResult = currentPackage.diagnosticResult();
         assertDiagnostics(diagnosticResult, new Object[][]{
-                {INVALID_PARAM_COUNT,
-                        "Invalid parameter count: The function 'onError' must have exactly one parameter of " +
-                                "type 'error?' or 'cdc:Error?'."}
+                {
+                        INVALID_PARAM_COUNT,
+                        "invalid parameter count: expected one parameter of type ''error?'' or ''cdc:Error?''",
+                        "(28:27,28:29)"
+                }
         });
     }
 
@@ -294,8 +396,11 @@ public class CompilerPluginTest {
         PackageCompilation currentPackage = loadAndCompilePackage("invalid_service_17");
         DiagnosticResult diagnosticResult = currentPackage.diagnosticResult();
         assertDiagnostics(diagnosticResult, new Object[][]{
-                {FUNCTION_SHOULD_BE_REMOTE,
-                        "Invalid function: The function 'onError' must be declared as a remote function."}
+                {
+                        FUNCTION_SHOULD_BE_REMOTE,
+                        "must be a ''remote'' function",
+                        "(28:4,30:5)"
+                }
         });
     }
 
@@ -304,7 +409,11 @@ public class CompilerPluginTest {
         PackageCompilation currentPackage = loadAndCompilePackage("invalid_service_18");
         DiagnosticResult diagnosticResult = currentPackage.diagnosticResult();
         assertDiagnostics(diagnosticResult, new Object[][]{
-                {INVALID_RESOURCE_FUNCTION, "Invalid resource function: Resource functions are not allowed."}
+                {
+                        INVALID_RESOURCE_FUNCTION,
+                        "resource functions are not allowed",
+                        "(28:4,29:5)"
+                }
         });
     }
 
@@ -313,15 +422,23 @@ public class CompilerPluginTest {
         PackageCompilation currentPackage = loadAndCompilePackage("invalid_service_19");
         DiagnosticResult diagnosticResult = currentPackage.diagnosticResult();
         assertDiagnostics(diagnosticResult, new Object[][]{
-                {INVALID_PARAM_COUNT,
-                        "Invalid parameter count: The function 'onCreate' must have exactly one parameter of type " +
-                                "'record' and may include an additional parameter of type 'string'."},
-                {INVALID_PARAM_COUNT,
-                        "Invalid parameter count: The function 'onUpdate' must have exactly two parameters of type " +
-                                "'record' and may include an additional parameter of type 'string'."},
-                {INVALID_PARAM_COUNT,
-                        "Invalid parameter count: The function 'onError' must have exactly one parameter of type " +
-                                "'error?' or 'cdc:Error?'."}
+                {
+                        INVALID_PARAM_COUNT,
+                        "invalid parameter count: expected one parameter of type ''record'' and " +
+                                "may include an additional parameter of type ''string''",
+                        "(24:28,24:70)"
+                },
+                {
+                        INVALID_PARAM_COUNT,
+                        "invalid parameter count: expected two parameters of type ''record'' and " +
+                                "may include an additional parameter of type ''string''",
+                        "(28:28,28:89)"
+                },
+                {
+                        INVALID_PARAM_COUNT,
+                        "invalid parameter count: expected one parameter of type ''error?'' or ''cdc:Error?''",
+                        "(32:27,32:58)"
+                }
         });
     }
 
@@ -330,15 +447,27 @@ public class CompilerPluginTest {
         PackageCompilation currentPackage = loadAndCompilePackage("invalid_service_20");
         DiagnosticResult diagnosticResult = currentPackage.diagnosticResult();
         assertDiagnostics(diagnosticResult, new Object[][]{
-                {INVALID_PARAM_COUNT,
-                        "Invalid parameter count: The function 'onTruncate' must have no parameters or " +
-                                "at most one optional parameter of type 'string'."},
-                {INVALID_PARAM_TYPE,
-                        "Invalid parameter type: The parameter 'abc' must be of type 'string'."},
-                {INVALID_RETURN_TYPE_ERROR_OR_NIL,
-                        "Invalid return type: The function 'onTruncate' must return either 'error?' or 'cdc:Error?'."},
-                {INVALID_RETURN_TYPE_ERROR_OR_NIL,
-                        "Invalid return type: The function 'onTruncate' must return either 'error?' or 'cdc:Error?'."}
+                {
+                        INVALID_PARAM_COUNT,
+                        "invalid parameter count: expected no parameters or " +
+                                "at most one optional parameter of type ''string''",
+                        "(38:30,38:55)"
+                },
+                {
+                        INVALID_PARAM_TYPE,
+                        "invalid type: expected ''string''",
+                        "(44:31,44:35)"
+                },
+                {
+                        INVALID_RETURN_TYPE_ERROR_OR_NIL,
+                        "invalid return type: expected ''error?'' or ''cdc:Error?''",
+                        "(64:51,64:67)"
+                },
+                {
+                        INVALID_RETURN_TYPE_ERROR_OR_NIL,
+                        "invalid return type: expected ''error?'' or ''cdc:Error?''",
+                        "(70:51,70:57)"
+                }
         });
     }
 

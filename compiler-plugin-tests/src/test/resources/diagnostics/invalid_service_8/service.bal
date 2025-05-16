@@ -22,14 +22,14 @@ listener cdc:MySqlListener cdcListener = new (database = {
 
 service cdc:Service on cdcListener {
 
-    remote function onUpdate(Table1 before, Table2 after, json tableName) {
+    remote function onUpdate(Table1 before, Table2 after, string tableName) {
     }
 }
 
 type Table1 record {
  string id;
-}
+};
 
 type Table2 record {
  string id2;
-}
+};

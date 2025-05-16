@@ -39,7 +39,7 @@ public final class Constants {
     //data.jsondata parseAsType constants
     public static final String ENABLE_CONSTRAINT_VALIDATION = "enableConstraintValidation";
     public static final String ALLOW_DATA_PROJECTION = "allowDataProjection";
-    public static final String PARSER_AS_TYPE_OPTIONS =  "Options";
+    public static final String PARSER_AS_TYPE_OPTIONS = "Options";
 
     private Constants() {
     }
