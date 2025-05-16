@@ -77,38 +77,35 @@ const string ORACLE_URL = "database.url";
 const string ORACLE_PDB_NAME = "database.dbname";
 const string ORACLE_CONNECTION_ADAPTER = "database.connection.adapter";
 
-isolated function getDebeziumProperties(MySqlListenerConfiguration|MsSqlListenerConfiguration|PostgresListenerConfiguration|OracleListenerConfiguration config) returns map<string> & readonly{
+isolated function getDebeziumProperties(MySqlListenerConfiguration|MsSqlListenerConfiguration|PostgresListenerConfiguration|OracleListenerConfiguration config) returns map<string> & readonly {
     map<string> configMap = {};
+    configMap[NAME] = config.engineName;
 
-    // Common configurations
-    populateCommonConfigurations(config, configMap);
-
-    // Schema history storage configurations
     populateSchemaHistoryConfigurations(config.internalSchemaStorage, configMap);
 
-    // Offset storage configurations
     populateOffsetStorageConfigurations(config.offsetStorage, configMap);
 
-    // Database-specific configurations
     populateDatabaseConfigurations(config.database, configMap);
 
+    populateOptions(config.options, configMap);
+
+    // The following values cannot be overridden by the user
+    configMap[TOMBSTONES_ON_DELETE] = "false";
     configMap[INCLUDE_SCHEMA_CHANGES] = "false";
+
     return configMap.cloneReadOnly();
 }
 
 // Populates common configurations shared across all databases
-isolated function populateCommonConfigurations(MySqlListenerConfiguration|MsSqlListenerConfiguration|PostgresListenerConfiguration|OracleListenerConfiguration config, map<string> configMap) {
-    configMap[NAME] = config.engineName;
-    configMap[CONNECTOR_CLASS] = config.connectorClass;
-    configMap[MAX_QUEUE_SIZE] = config.maxQueueSize.toString();
-    configMap[MAX_BATCH_SIZE] = config.maxBatchSize.toString();
-    configMap[EVENT_PROCESSING_FAILURE_HANDLING_MODE] = config.eventProcessingFailureHandlingMode;
-    configMap[SNAPSHOT_MODE] = config.snapshotMode;
-    configMap[SKIPPED_OPERATIONS] = string:'join(",", ...config.skippedOperations);
-    configMap[SKIP_MESSAGES_WITHOUT_CHANGE] = config.skipMessagesWithoutChange.toString();
-    configMap[TOMBSTONES_ON_DELETE] = config.sendTombstonesOnDelete.toString();
-    configMap[DECIMAL_HANDLING_MODE] = config.decimalHandlingMode;
-    configMap[DATABASE_QUERY_TIMEOUTS_MS] = getMillisecondValueOf(config.queryTimeout);
+isolated function populateOptions(Options options, map<string> configMap) {
+    configMap[MAX_QUEUE_SIZE] = options.maxQueueSize.toString();
+    configMap[MAX_BATCH_SIZE] = options.maxBatchSize.toString();
+    configMap[EVENT_PROCESSING_FAILURE_HANDLING_MODE] = options.eventProcessingFailureHandlingMode;
+    configMap[SNAPSHOT_MODE] = options.snapshotMode;
+    configMap[SKIPPED_OPERATIONS] = string:'join(",", ...options.skippedOperations);
+    configMap[SKIP_MESSAGES_WITHOUT_CHANGE] = options.skipMessagesWithoutChange.toString();
+    configMap[DECIMAL_HANDLING_MODE] = options.decimalHandlingMode;
+    configMap[DATABASE_QUERY_TIMEOUTS_MS] = getMillisecondValueOf(options.queryTimeout);
 }
 
 // Populates schema history storage configurations
@@ -144,6 +141,7 @@ isolated function populateOffsetStorageConfigurations(FileOffsetStorage|KafkaOff
 
 // Populates database-specific configurations
 isolated function populateDatabaseConfigurations(MySqlDatabaseConnection|MsSqlDatabaseConnection|PostgresDatabaseConnection|OracleDatabaseConnection connection, map<string> configMap) {
+    configMap[CONNECTOR_CLASS] = connection.connectorClass;
     configMap[DATABASE_HOSTNAME] = connection.hostname;
     configMap[DATABASE_PORT] = connection.port.toString();
     configMap[DATABASE_USER] = connection.username;
