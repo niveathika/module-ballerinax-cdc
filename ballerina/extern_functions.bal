@@ -16,17 +16,50 @@
 
 import ballerina/jballerina.java;
 
-isolated function externDetach(MySqlListener|MsSqlListener|PostgreSqlListener|OracleListener self, Service o) returns boolean|Error = @java:Method {
-    name: "detach",
-    'class: "io.ballerina.lib.cdc.Listener"
-} external;
-
-isolated function externAttach(MySqlListener|MsSqlListener|PostgreSqlListener|OracleListener self, Service o) returns Error? = @java:Method {
+# Attach point to call the native attach method of the CDC listener.
+#
+# + cdcListener - the cdc listener object  
+# + cdcService - the cdc service object
+# + return - an error if the service cannot be attached, or `()` if successful
+public isolated function externAttach(Listener cdcListener, Service cdcService) returns Error? = @java:Method {
     name: "attach",
     'class: "io.ballerina.lib.cdc.Listener"
 } external;
 
-isolated function externStart(MySqlListener|MsSqlListener|PostgreSqlListener|OracleListener self, map<string> config) returns Error? = @java:Method {
+# Attach point to call the detach start method of the CDC listener.
+#
+# + cdcListener - the cdc listener object
+# + cdcService - the configuration map
+# + return - an error if the service cannot be detached, or `()` if successful
+public isolated function externDetach(Listener cdcListener, Service cdcService) returns Error? = @java:Method {
+    name: "detach",
+    'class: "io.ballerina.lib.cdc.Listener"
+} external;
+
+# Attach point to call the start method of the CDC listener.
+#
+# + cdcListener - the cdc listener object
+# + config - the configuration map containing debezium properties
+# + return - an error if the listener cannot be started, or `()` if successful
+public isolated function externStart(Listener cdcListener, map<string> config) returns Error? = @java:Method {
     name: "start",
+    'class: "io.ballerina.lib.cdc.Listener"
+} external;
+
+# Attach point to call the gracefulStop method of the CDC listener.
+#
+# + cdcListener - the cdc listener object
+# + return - an error if the listener cannot be stopped, or `()` if successful
+public isolated function externGracefulStop(Listener cdcListener) returns Error? = @java:Method {
+    name: "gracefulStop",
+    'class: "io.ballerina.lib.cdc.Listener"
+} external;
+
+# Attach point to call the immediateStop method of the CDC listener.
+#
+# + cdcListener - the cdc listener object
+# + return - an error if the listener cannot be stopped, or `()` if successful
+public isolated function externImmediateStop(Listener cdcListener) returns Error? = @java:Method {
+    name: "immediateStop",
     'class: "io.ballerina.lib.cdc.Listener"
 } external;

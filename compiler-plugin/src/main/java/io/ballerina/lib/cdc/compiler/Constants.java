@@ -22,11 +22,12 @@ import java.util.List;
 public final class Constants {
     public static final String PACKAGE_ORG = "ballerinax";
     public static final String PACKAGE_PREFIX = "cdc";
+    public static final String POSTGRESQL_PACKAGE_PREFIX = "postgres";
 
     // Parameters
     public static final String ERROR_PARAM = "Error";
 
-    public static final String POSTGRES_LISTENER_NAME = "PostgreSqlListener";
+    public static final String CDC_LISTENER_NAME = "Listener";
     public static final List<String> VALID_FUNCTIONS = List.of(
             ServiceMethodNames.ON_READ,
             ServiceMethodNames.ON_CREATE,

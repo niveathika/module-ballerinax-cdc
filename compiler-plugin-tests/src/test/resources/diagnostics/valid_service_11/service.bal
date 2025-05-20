@@ -39,6 +39,6 @@ public isolated class MySqlListener {
 
 listener MySqlListener cdcListener = new ();
 
-service cdc:Service on cdcListener {
+service on cdcListener {
 
 }

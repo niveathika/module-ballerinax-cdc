@@ -15,7 +15,7 @@
 // under the License.
 import ballerinax/cdc;
 
-listener cdc:MySqlListener cdcListener = new (database = {
+listener MockListener cdcListener = new (database = {
     username: "root",
     password: "root"
 });

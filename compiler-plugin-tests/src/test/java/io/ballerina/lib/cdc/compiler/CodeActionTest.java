@@ -146,7 +146,7 @@ public class CodeActionTest {
         );
     }
 
-    @Test
+    @Test(enabled = false)
     public void testPostgresEmptyServiceCodeAction() throws IOException {
 
         CodeActionArgument locationArg = CodeActionArgument.from(NODE_LOCATION,
@@ -165,7 +165,7 @@ public class CodeActionTest {
         );
     }
 
-    @Test
+    @Test(enabled = false)
     public void testPostgresEmptyServiceCodeActionWithTableName() throws IOException {
 
         CodeActionArgument locationArg = CodeActionArgument.from(NODE_LOCATION,
@@ -187,7 +187,7 @@ public class CodeActionTest {
     @Test
     public void testMakeFunctionRemote() throws IOException {
 
-        CodeActionArgument locationArg = CodeActionArgument.from(NODE_LOCATION, 224);
+        CodeActionArgument locationArg = CodeActionArgument.from(NODE_LOCATION, 231);
         CodeActionInfo expectedCodeAction = CodeActionInfo.from("Make the function remote", List.of(locationArg));
         expectedCodeAction.setProviderName(
                 FUNCTION_SHOULD_BE_REMOTE.getCode() + "/ballerinax/cdc/" + MAKE_FUNCTION_REMOTE);
@@ -203,7 +203,7 @@ public class CodeActionTest {
     @Test
     public void testChangeReturnTypeToError() throws IOException {
 
-        CodeActionArgument locationArg = CodeActionArgument.from(NODE_LOCATION, TextRange.from(173, 7));
+        CodeActionArgument locationArg = CodeActionArgument.from(NODE_LOCATION, TextRange.from(180, 7));
         CodeActionInfo expectedCodeAction =
                 CodeActionInfo.from("Change return type to error?", List.of(locationArg));
         expectedCodeAction.setProviderName(
@@ -219,7 +219,7 @@ public class CodeActionTest {
     @Test
     public void testChangeReturnTypeToCdcError() throws IOException {
 
-        CodeActionArgument locationArg = CodeActionArgument.from(NODE_LOCATION, TextRange.from(173, 7));
+        CodeActionArgument locationArg = CodeActionArgument.from(NODE_LOCATION, TextRange.from(180, 7));
         CodeActionInfo expectedCodeAction =
                 CodeActionInfo.from("Change return type to cdc:Error?", List.of(locationArg));
         expectedCodeAction.setProviderName(

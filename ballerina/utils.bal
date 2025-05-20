@@ -56,59 +56,25 @@ const string OFFSET_STORAGE_REPLICATION_FACTOR = "offset.storage.replication.fac
 const string INCLUDE_SCHEMA_CHANGES = "include.schema.changes";
 const string TOMBSTONES_ON_DELETE = "tombstones.on.delete";
 
-const string SCHEMA_INCLUDE_LIST = "schema.include.list";
-const string SCHEMA_EXCLUDE_LIST = "schema.exclude.list";
+# Processes the given configuration and populates the map with the necessary debezium properties.
+#
+# + config - listener configuration
+# + configMap - map to populate with debezium properties
+public isolated function populateDebeziumProperties(ListenerConfiguration config, map<string> configMap) {
 
-const string MYSQL_DATABASE_SERVER_ID = "database.server.id";
-const string MYSQL_DATABASE_INCLUDE_LIST = "database.include.list";
-const string MYSQL_DATABASE_EXCLUDE_LIST = "database.exclude.list";
-
-const string MSSQL_DATABASE_NAMES = "database.names";
-const string MSSQL_DATABASE_INSTANCE = "database.instance";
-const string MSSQL_DATABASE_ENCRYPT = "database.encrypt";
-
-const string POSTGRESQL_DATABASE_NAME = "database.dbname";
-const string POSTGRESQL_PLUGIN_NAME = "plugin.name";
-const string POSTGRESQL_SLOT_NAME = "slot.name";
-const string POSTGRESQL_PUBLICATION_NAME = "publication.name";
-
-const string ORACLE_DATABASE_NAME = "database.dbname";
-const string ORACLE_URL = "database.url";
-const string ORACLE_PDB_NAME = "database.dbname";
-const string ORACLE_CONNECTION_ADAPTER = "database.connection.adapter";
-
-isolated function getDebeziumProperties(MySqlListenerConfiguration|MsSqlListenerConfiguration|PostgresListenerConfiguration|OracleListenerConfiguration config) returns map<string> & readonly {
-    map<string> configMap = {};
     configMap[NAME] = config.engineName;
 
     populateSchemaHistoryConfigurations(config.internalSchemaStorage, configMap);
 
     populateOffsetStorageConfigurations(config.offsetStorage, configMap);
 
-    populateDatabaseConfigurations(config.database, configMap);
-
     populateOptions(config.options, configMap);
 
     // The following values cannot be overridden by the user
     configMap[TOMBSTONES_ON_DELETE] = "false";
     configMap[INCLUDE_SCHEMA_CHANGES] = "false";
-
-    return configMap.cloneReadOnly();
 }
 
-// Populates common configurations shared across all databases
-isolated function populateOptions(Options options, map<string> configMap) {
-    configMap[MAX_QUEUE_SIZE] = options.maxQueueSize.toString();
-    configMap[MAX_BATCH_SIZE] = options.maxBatchSize.toString();
-    configMap[EVENT_PROCESSING_FAILURE_HANDLING_MODE] = options.eventProcessingFailureHandlingMode;
-    configMap[SNAPSHOT_MODE] = options.snapshotMode;
-    configMap[SKIPPED_OPERATIONS] = string:'join(",", ...options.skippedOperations);
-    configMap[SKIP_MESSAGES_WITHOUT_CHANGE] = options.skipMessagesWithoutChange.toString();
-    configMap[DECIMAL_HANDLING_MODE] = options.decimalHandlingMode;
-    configMap[DATABASE_QUERY_TIMEOUTS_MS] = getMillisecondValueOf(options.queryTimeout);
-}
-
-// Populates schema history storage configurations
 isolated function populateSchemaHistoryConfigurations(FileInternalSchemaStorage|KafkaInternalSchemaStorage schemaHistoryInternal, map<string> configMap) {
     configMap[SCHEMA_HISTORY_INTERNAL] = schemaHistoryInternal.className;
     configMap[TOPIC_PREFIX] = schemaHistoryInternal.topicPrefix;
@@ -122,7 +88,6 @@ isolated function populateSchemaHistoryConfigurations(FileInternalSchemaStorage|
     }
 }
 
-// Populates offset storage configurations
 isolated function populateOffsetStorageConfigurations(FileOffsetStorage|KafkaOffsetStorage offsetStorage, map<string> configMap) {
     configMap[OFFSET_STORAGE] = offsetStorage.className;
     configMap[OFFSET_FLUSH_INTERVAL_MS] = getMillisecondValueOf(offsetStorage.flushInterval);
@@ -139,8 +104,22 @@ isolated function populateOffsetStorageConfigurations(FileOffsetStorage|KafkaOff
     }
 }
 
-// Populates database-specific configurations
-isolated function populateDatabaseConfigurations(MySqlDatabaseConnection|MsSqlDatabaseConnection|PostgresDatabaseConnection|OracleDatabaseConnection connection, map<string> configMap) {
+isolated function populateOptions(Options options, map<string> configMap) {
+    configMap[MAX_QUEUE_SIZE] = options.maxQueueSize.toString();
+    configMap[MAX_BATCH_SIZE] = options.maxBatchSize.toString();
+    configMap[EVENT_PROCESSING_FAILURE_HANDLING_MODE] = options.eventProcessingFailureHandlingMode;
+    configMap[SNAPSHOT_MODE] = options.snapshotMode;
+    configMap[SKIPPED_OPERATIONS] = string:'join(",", ...options.skippedOperations);
+    configMap[SKIP_MESSAGES_WITHOUT_CHANGE] = options.skipMessagesWithoutChange.toString();
+    configMap[DECIMAL_HANDLING_MODE] = options.decimalHandlingMode;
+    configMap[DATABASE_QUERY_TIMEOUTS_MS] = getMillisecondValueOf(options.queryTimeout);
+}
+
+# Populates the database configurations in the given map.
+#
+# + connection - database connection configuration  
+# + configMap - map to populate with database configurations
+public isolated function populateDatabaseConfigurations(DatabaseConnection connection, map<string> configMap) {
     configMap[CONNECTOR_CLASS] = connection.connectorClass;
     configMap[DATABASE_HOSTNAME] = connection.hostname;
     configMap[DATABASE_PORT] = connection.port.toString();
@@ -154,19 +133,9 @@ isolated function populateDatabaseConfigurations(MySqlDatabaseConnection|MsSqlDa
 
     populateSslConfigurations(connection, configMap);
     populateTableAndColumnConfigurations(connection, configMap);
-
-    if connection is MySqlDatabaseConnection {
-        populateMySqlConfigurations(connection, configMap);
-    } else if connection is MsSqlDatabaseConnection {
-        populateMsSqlConfigurations(connection, configMap);
-    } else if connection is PostgresDatabaseConnection {
-        populatePostgresConfigurations(connection, configMap);
-    } else {
-        populateOracleConfigurations(connection, configMap);
-    }
 }
 
-isolated function populateSslConfigurations(MySqlDatabaseConnection|MsSqlDatabaseConnection|PostgresDatabaseConnection|OracleDatabaseConnection connection, map<string> configMap) {
+isolated function populateSslConfigurations(DatabaseConnection connection, map<string> configMap) {
     SecureDatabaseConnection? secure = connection.secure;
     if secure !is () {
         configMap[DATABASE_SSL_MODE] = secure.sslMode.toString();
@@ -186,7 +155,7 @@ isolated function populateSslConfigurations(MySqlDatabaseConnection|MsSqlDatabas
 }
 
 // Populates table and column inclusion/exclusion configurations
-isolated function populateTableAndColumnConfigurations(MySqlDatabaseConnection|MsSqlDatabaseConnection|PostgresDatabaseConnection|OracleDatabaseConnection connection, map<string> configMap) {
+isolated function populateTableAndColumnConfigurations(DatabaseConnection connection, map<string> configMap) {
     string|string[]? includedTables = connection.includedTables;
     if includedTables !is () {
         configMap[TABLE_INCLUDE_LIST] = includedTables is string ? includedTables : string:'join(",", ...includedTables);
@@ -205,75 +174,6 @@ isolated function populateTableAndColumnConfigurations(MySqlDatabaseConnection|M
     string|string[]? excludedColumns = connection.excludedColumns;
     if excludedColumns !is () {
         configMap[COLUMN_EXCLUDE_LIST] = excludedColumns is string ? excludedColumns : string:'join(",", ...excludedColumns);
-    }
-}
-
-// Populates MySQL-specific configurations
-isolated function populateMySqlConfigurations(MySqlDatabaseConnection connection, map<string> configMap) {
-    configMap[MYSQL_DATABASE_SERVER_ID] = connection.databaseServerId.toString();
-
-    string|string[]? includedDatabases = connection.includedDatabases;
-    if includedDatabases !is () {
-        configMap[MYSQL_DATABASE_INCLUDE_LIST] = includedDatabases is string ? includedDatabases : string:'join(",", ...includedDatabases);
-    }
-
-    string|string[]? excludedDatabases = connection.excludedDatabases;
-    if excludedDatabases !is () {
-        configMap[MYSQL_DATABASE_EXCLUDE_LIST] = excludedDatabases is string ? excludedDatabases : string:'join(",", ...excludedDatabases);
-    }
-}
-
-// Populates MSSQL-specific configurations
-isolated function populateMsSqlConfigurations(MsSqlDatabaseConnection connection, map<string> configMap) {
-    if connection.databaseInstance !is () {
-        configMap[MSSQL_DATABASE_INSTANCE] = connection.databaseInstance ?: "";
-    }
-
-    string|string[] databaseNames = connection.databaseNames;
-    configMap[MSSQL_DATABASE_NAMES] = databaseNames is string ? databaseNames : string:'join(",", ...databaseNames);
-
-    populateSchemaConfigurations(connection, configMap);
-
-    if connection.secure is () {
-        configMap[MSSQL_DATABASE_ENCRYPT] = "false";
-    }
-}
-
-// Populates PostgreSQL-specific configurations
-isolated function populatePostgresConfigurations(PostgresDatabaseConnection connection, map<string> configMap) {
-    configMap[POSTGRESQL_DATABASE_NAME] = connection.databaseName;
-    populateSchemaConfigurations(connection, configMap);
-    configMap[POSTGRESQL_PLUGIN_NAME] = connection.pluginName;
-    configMap[POSTGRESQL_SLOT_NAME] = connection.slotName;
-    configMap[POSTGRESQL_PUBLICATION_NAME] = connection.publicationName;
-}
-
-// Populates Oracle-specific configurations
-isolated function populateOracleConfigurations(OracleDatabaseConnection connection, map<string> configMap) {
-    configMap[ORACLE_DATABASE_NAME] = connection.databaseName;
-
-    if connection.url !is () {
-        configMap[ORACLE_URL] = connection.url ?: "";
-    }
-
-    if connection.pdbName !is () {
-        configMap[ORACLE_PDB_NAME] = connection.pdbName ?: "";
-    }
-
-    configMap[ORACLE_CONNECTION_ADAPTER] = connection.connectionAdopter;
-    populateSchemaConfigurations(connection, configMap);
-}
-
-// Populates schema inclusion/exclusion configurations
-isolated function populateSchemaConfigurations(MsSqlDatabaseConnection|PostgresDatabaseConnection|OracleDatabaseConnection connection, map<string> configMap) {
-    string|string[]? includedSchemas = connection.includedSchemas;
-    if includedSchemas !is () {
-        configMap[SCHEMA_INCLUDE_LIST] = includedSchemas is string ? includedSchemas : string:'join(",", ...includedSchemas);
-    }
-
-    string|string[]? excludedSchemas = connection.excludedSchemas;
-    if excludedSchemas !is () {
-        configMap[SCHEMA_EXCLUDE_LIST] = excludedSchemas is string ? excludedSchemas : string:'join(",", ...excludedSchemas);
     }
 }
 

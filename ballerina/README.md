@@ -7,162 +7,28 @@ With the CDC module, you can:
 - Process and react to database events programmatically.
 - Build event-driven applications with ease.
 
-## Setup guide
-
-### 1. Enable CDC for MySQL
-
-1. **Verify Binary Logging**:
-   - Run the following command to ensure binary logging is enabled:
-     ```sql
-     SHOW VARIABLES LIKE 'log_bin';
-     ```
-
-2. **Enable Binary Logging**:
-   - Add the following lines to the MySQL configuration file (`my.cnf` or `my.ini`):
-     ```ini
-     [mysqld]
-     log-bin=mysql-bin
-     binlog-format=ROW
-     server-id=1
-     ```
-   - Restart the MySQL server to apply the changes:
-     ```bash
-     sudo service mysql restart
-     ```
-     Or, if you are using Homebrew on macOS:
-     ```bash
-     brew services restart mysql
-     ```
-
-### 2. Enable CDC for Microsoft SQL Server
-
-1. **Ensure SQL Server Agent is Enabled**:
-   - The SQL Server Agent must be running to use CDC. Start the agent if it is not already running.
-
-2. **Enable CDC for the Database**:
-   - Run the following command to enable CDC for the database:
-     ```sql
-     USE <your_database_name>;
-     EXEC sys.sp_cdc_enable_db;
-     ```
-
-3. **Enable CDC for Specific Tables**:
-   - Enable CDC for the required tables by specifying the schema and table name:
-     ```sql
-     EXEC sys.sp_cdc_enable_table
-         @source_schema = 'your_schema_name',
-         @source_name = 'your_table_name',
-         @role_name = NULL;
-     ```
-
-4. **Verify CDC Configuration**:
-   - Run the following query to verify that CDC is enabled for the database:
-     ```sql
-     SELECT name, is_cdc_enabled FROM sys.databases WHERE name = 'your_database_name';
-     ```
-
-### 3. Enable CDC for PostgreSQL Server
-
-1. **Enable Logical Replication**:
-   - Add the following lines to the PostgreSQL configuration file (`postgresql.conf`):
-     ```ini
-     wal_level = logical
-     max_replication_slots = 4
-     max_wal_senders = 4
-     ```
-   - Restart the PostgreSQL server to apply the changes:
-     ```bash
-     sudo service postgresql restart
-     ```
-
-### 4. Enable CDC for Oracle Database
-
-To enable CDC for Oracle Database, follow these steps:
-
-1. **Enable Supplemental Logging**:
-    - Supplemental logging must be enabled to capture changes in the database. Run the following SQL command:
-      ```sql
-      ALTER DATABASE ADD SUPPLEMENTAL LOG DATA;
-      ```
-
-2. **Create a Change Table**:
-    - Use the `DBMS_LOGMNR_CDC_PUBLISH.CREATE_CHANGE_TABLE` procedure to create a change table for capturing changes. Replace `<schema_name>` and `<table_name>` with your schema and table names:
-      ```sql
-      BEGIN
-          DBMS_LOGMNR_CDC_PUBLISH.CREATE_CHANGE_TABLE(
-              owner_name         => '<schema_name>',
-              change_table_name  => 'cdc_<table_name>',
-              source_schema_name => '<schema_name>',
-              source_table_name  => '<table_name>',
-              column_type_list   => 'id NUMBER, name VARCHAR2(100), updated_at DATE',
-              capture_values     => 'ALL',
-              rs_id              => 'Y',
-              row_id             => 'Y',
-              user_id            => 'Y',
-              timestamp          => 'Y',
-              object_id          => 'Y',
-              source_colmap      => 'Y'
-          );
-      END;
-      ```
-
-3. **Start Change Data Capture**:
-    - Use the `DBMS_LOGMNR_CDC_SUBSCRIBE.START_SUBSCRIPTION` procedure to start capturing changes:
-      ```sql
-      BEGIN
-          DBMS_LOGMNR_CDC_SUBSCRIBE.START_SUBSCRIPTION(
-              subscription_name => 'cdc_subscription'
-          );
-      END;
-      ```
-
-4. **Grant Necessary Permissions**:
-    - Ensure the user has the necessary permissions to use CDC:
-      ```sql
-      GRANT EXECUTE ON DBMS_LOGMNR TO <username>;
-      GRANT SELECT ON V$LOGMNR_CONTENTS TO <username>;
-      ```
-
-5. **Verify CDC Configuration**:
-    - Run the following query to verify that CDC is enabled for the database:
-      ```sql
-      SELECT * FROM DBA_LOGMNR_CDC_PUBLISH;
-      ```
-
-6. **Stop Change Data Capture (Optional)**:
-    - To stop CDC, use the `DBMS_LOGMNR_CDC_SUBSCRIBE.STOP_SUBSCRIPTION` procedure:
-      ```sql
-      BEGIN
-          DBMS_LOGMNR_CDC_SUBSCRIBE.STOP_SUBSCRIPTION(
-              subscription_name => 'cdc_subscription'
-          );
-      END;
-      ```
-
 ## Quickstart
 
-### Step 1: Import the Module
+### Step 1: Import the Required Modules
 
-Import the CDC module into your Ballerina program:
+Add the following imports to your Ballerina program:
+
+- `ballerinax/cdc`: Core module that provides APIs to capture and process database change events.
+- `ballerinax/mysql.cdc.driver as _`: Debezium-based driver for MySQL CDC. Use the appropriate driver for your database (e.g., `mssql.cdc.driver`, `postgresql.cdc.driver`, or `oracledb.cdc.driver`).
+- `ballerinax/mysql`: Provides MySQL-specific listener and types for CDC. Replace with the corresponding module for your database if needed.
 
 ```ballerina
 import ballerinax/cdc;
+import ballerinax/mysql.cdc.driver as _;
+import ballerinax/mysql;
 ```
 
-### Step 2: Import the CDC MySQL Driver
+### Step 2: Configure the CDC Listener
 
-Import the CDC MySQL Driver module into your Ballerina program:
-
-```ballerina
-import ballerinax/cdc.mysql.driver as _;
-```
-
-### Step 3: Configure the Listener
-
-Create a CDC listener for your database. For example, to create a MySQL listener:
+Create a CDC listener for your MySQL database by specifying the connection details:
 
 ```ballerina
-listener cdc:MySqlListener mysqlListener = new ({
+listener mysql:CdcListener mysqlListener = new ({
     hostname: "localhost",
     port: 3306,
     username: "username",
@@ -171,12 +37,12 @@ listener cdc:MySqlListener mysqlListener = new ({
 });
 ```
 
-### Step 4: Define the Service
+### Step 3: Define the CDC Service
 
-Define a CDC service to handle database change events:
+Implement a `cdc:Service` to handle database change events:
 
 ```ballerina
-service cdcService on mysqlListener {
+service on mysqlListener {
 
     remote function onRead(record {} after) returns error? {
         // Handle the read event
@@ -200,11 +66,11 @@ service cdcService on mysqlListener {
 }
 ```
 
-### Step 5: Run the Application
+### Step 4: Run the Application
 
 Run your Ballerina application:
 
-```ballerina
+```bash
 bal run
 ```
 

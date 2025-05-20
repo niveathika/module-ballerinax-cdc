@@ -14,7 +14,6 @@
 // specific language governing permissions and limitations
 // under the License.
 import ballerina/crypto;
-import ballerina/random;
 
 # Represents the SSL modes for secure database connections.
 public enum SslMode {
@@ -196,102 +195,6 @@ public type DatabaseConnection record {|
     string|string[] excludedColumns?;
 |};
 
-# Represents the configuration for a MySQL database connection.
-#
-# + connectorClass - The class name of the MySQL connector implementation to use
-# + hostname - The hostname of the MySQL server
-# + port - The port number of the MySQL server
-# + databaseServerId - The unique identifier for the MySQL server
-# + includedDatabases - A list of regular expressions matching fully-qualified database identifiers to capture changes from (should not be used alongside databaseExclude)
-# + excludedDatabases - A list of regular expressions matching fully-qualified database identifiers to exclude from change capture (should not be used alongside databaseInclude)
-# + tasksMax - The maximum number of tasks to create for this connector. Because the MySQL connector always uses a single task, changing the default value has no effect
-# + secure - The connector establishes an encrypted connection if the server supports secure connections
-public type MySqlDatabaseConnection record {|
-    *DatabaseConnection;
-    string connectorClass = "io.debezium.connector.mysql.MySqlConnector";
-    string hostname = "localhost";
-    int port = 3306;
-    string databaseServerId = (checkpanic random:createIntInRange(0, 100000)).toString();
-    string|string[] includedDatabases?;
-    string|string[] excludedDatabases?;
-    int tasksMax = 1;
-    SecureDatabaseConnection secure = {};
-|};
-
-# Represents the configuration for an MSSQL database connection.
-#
-# + connectorClass - The class name of the MSSQL connector implementation to use
-# + hostname - The hostname of the MSSQL server
-# + port - The port number of the MSSQL server
-# + databaseInstance - The name of the database instance
-# + databaseNames - A list of database names to capture changes from
-# + includedSchemas - A list of regular expressions matching fully-qualified schema identifiers to capture changes from
-# + excludedSchemas - A list of regular expressions matching fully-qualified schema identifiers to exclude from change capture
-# + tasksMax - The maximum number of tasks to create for this connector. If the `databaseNames` contains more than one element, you can increase the value of this property to a number less than or equal to the number of elements in the list
-public type MsSqlDatabaseConnection record {|
-    *DatabaseConnection;
-    string connectorClass = "io.debezium.connector.sqlserver.SqlServerConnector";
-    string hostname = "localhost";
-    int port = 1433;
-    string databaseInstance?;
-    string|string[] databaseNames;
-    string|string[] includedSchemas?;
-    string|string[] excludedSchemas?;
-    int tasksMax = 1;
-|};
-
-# Represents the configuration for a PostgreSQL CDC connector.
-#
-# + connectorClass - The class name of the PostgreSQL connector implementation to use
-# + hostname - The hostname of the PostgreSQL server
-# + port - The port number of the PostgreSQL server
-# + databaseName - The name of the PostgreSQL database from which to stream the changes.
-# + includedSchemas - A list of regular expressions matching fully-qualified schema identifiers to capture changes from
-# + excludedSchemas - A list of regular expressions matching fully-qualified schema identifiers to exclude from change capture
-# + tasksMax - The PostgreSQL connector always uses a single task and therefore does not use this value, so the default is always acceptable
-# + pluginName - The name of the PostgreSQL logical decoding plug-in installed on the server
-# + slotName - The name of the PostgreSQL logical decoding slot
-# + publicationName - The name of the PostgreSQL publication created for streaming changes when using pgoutput.
-public type PostgresDatabaseConnection record {|
-    *DatabaseConnection;
-    string connectorClass = "io.debezium.connector.postgresql.PostgresConnector";
-    string hostname = "localhost";
-    int port = 5432;
-    string databaseName;
-    string|string[] includedSchemas?;
-    string|string[] excludedSchemas?;
-    int tasksMax = 1;
-    PostgreSQLLogicalDecodingPlugin pluginName = PGOUTPUT;
-    string slotName = "debezium";
-    string publicationName = "dbz_publication";
-|};
-
-# Represents the configuration for a Oracle CDC connector.
-#
-# + connectorClass - The class name of the Oracle connector implementation to use
-# + hostname - The hostname of the Oracle server
-# + port - The port number of the Oracle server
-# + url - JDBC url
-# + pdbName - Name of the Oracle pluggable database to connect to. Use this property with container database (CDB) installations only
-# + databaseName - The name of the Oracle database from which to stream the changes
-# + connectionAdopter - The adapter implementation that the connector uses when it streams database changes
-# + includedSchemas - A list of regular expressions matching fully-qualified schema identifiers to capture changes from
-# + excludedSchemas - A list of regular expressions matching fully-qualified schema identifiers to exclude from change capture
-# + tasksMax - The Oracle connector always uses a single task and therefore does not use this value, so the default is always acceptable
-public type OracleDatabaseConnection record {|
-    *DatabaseConnection;
-    string connectorClass = "io.debezium.connector.oracle.OracleConnector";
-    string hostname = "localhost";
-    int port = 1521;
-    string url?;
-    string pdbName?;
-    string databaseName;
-    OracleConnectionAdopter connectionAdopter = LOGMINER;
-    string|string[] includedSchemas?;
-    string|string[] excludedSchemas?;
-    int tasksMax = 1;
-|};
-
 # Provides a set of additional configurations related to the cdc connection.
 #
 # + snapshotMode - The mode for capturing snapshots
@@ -324,36 +227,4 @@ public type ListenerConfiguration record {|
     FileInternalSchemaStorage|KafkaInternalSchemaStorage internalSchemaStorage = {};
     FileOffsetStorage|KafkaOffsetStorage offsetStorage = {};
     Options options = {};
-|};
-
-# Represents the configuration for a MySQL CDC connector.
-#
-# + database - The MySQL database connection configuration
-public type MySqlListenerConfiguration record {|
-    MySqlDatabaseConnection database;
-    *ListenerConfiguration;
-|};
-
-# Represents the configuration for an MSSQL CDC connector.
-#
-# + database - The MSSQL database connection configuration
-public type MsSqlListenerConfiguration record {|
-    MsSqlDatabaseConnection database;
-    *ListenerConfiguration;
-|};
-
-# Represents the configuration for a Postgres CDC connector.
-#
-# + database - The Postgres database connection configuration
-public type PostgresListenerConfiguration record {|
-    PostgresDatabaseConnection database;
-    *ListenerConfiguration;
-|};
-
-# Represents the configuration for an Oracle CDC connector.
-#
-# + database - The Oracle database connection configuration
-public type OracleListenerConfiguration record {|
-    OracleDatabaseConnection database;
-    *ListenerConfiguration;
 |};

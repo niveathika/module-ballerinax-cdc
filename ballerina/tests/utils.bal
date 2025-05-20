@@ -14,14 +14,9 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import ballerinax/cdc as foo;
+import ballerinax/mysql.cdc.driver as _;
 
-listener foo:MySqlListener cdcListener = new (database = {
-    username: "root",
-    password: "root"
-});
-
-service foo:Service on cdcListener {
-    remote function onRead(record {|anydata...;|} after) {
-    }
-}
+string username = "root";
+string password = "root";
+string database = "store_db";
+int port = 3307;

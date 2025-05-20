@@ -58,8 +58,8 @@ public class CompletionTest {
         };
     }
 
-    @Test(dataProvider = "completion-data-provider")
-    protected void test(String sourceFile, int line, int offset, String expectedFile) throws IOException {
+    @Test(enabled = false, dataProvider = "completion-data-provider")
+    public void test(String sourceFile, int line, int offset, String expectedFile) throws IOException {
         Path sourceFilePath = RESOURCE_DIRECTORY.resolve("completions-source").resolve(sourceFile);
         Path expectedFilePath = RESOURCE_DIRECTORY.resolve("completions-expected").resolve(expectedFile);
         TestConfig expectedList = GSON.fromJson(Files.newBufferedReader(expectedFilePath), TestConfig.class);

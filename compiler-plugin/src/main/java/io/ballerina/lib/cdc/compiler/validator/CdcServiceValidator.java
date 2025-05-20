@@ -18,6 +18,7 @@
 package io.ballerina.lib.cdc.compiler.validator;
 
 import io.ballerina.compiler.api.symbols.MethodSymbol;
+import io.ballerina.compiler.api.symbols.ModuleSymbol;
 import io.ballerina.compiler.api.symbols.ServiceDeclarationSymbol;
 import io.ballerina.compiler.api.symbols.TypeSymbol;
 import io.ballerina.compiler.syntax.tree.FunctionDefinitionNode;
@@ -28,25 +29,27 @@ import io.ballerina.lib.cdc.compiler.Utils;
 import io.ballerina.projects.plugins.SyntaxNodeAnalysisContext;
 import io.ballerina.tools.diagnostics.DiagnosticInfo;
 
+import java.util.List;
 import java.util.Optional;
 
 import static io.ballerina.compiler.syntax.tree.SyntaxKind.OBJECT_METHOD_DEFINITION;
 import static io.ballerina.compiler.syntax.tree.SyntaxKind.RESOURCE_ACCESSOR_DEFINITION;
-import static io.ballerina.lib.cdc.compiler.Constants.POSTGRES_LISTENER_NAME;
+import static io.ballerina.lib.cdc.compiler.Constants.PACKAGE_ORG;
+import static io.ballerina.lib.cdc.compiler.Constants.POSTGRESQL_PACKAGE_PREFIX;
 import static io.ballerina.lib.cdc.compiler.Constants.VALID_FUNCTIONS;
 import static io.ballerina.lib.cdc.compiler.Constants.VALID_FUNCTIONS_NON_POSTGRES;
 import static io.ballerina.lib.cdc.compiler.DiagnosticCodes.EMPTY_SERVICE;
 import static io.ballerina.lib.cdc.compiler.DiagnosticCodes.EMPTY_SERVICE_POSTGRESQL;
+import static io.ballerina.lib.cdc.compiler.DiagnosticCodes.INVALID_MULTIPLE_LISTENERS;
 import static io.ballerina.lib.cdc.compiler.DiagnosticCodes.INVALID_RESOURCE_FUNCTION;
 import static io.ballerina.lib.cdc.compiler.DiagnosticCodes.NO_VALID_FUNCTION;
 import static io.ballerina.lib.cdc.compiler.Utils.getMethodSymbol;
 import static io.ballerina.tools.diagnostics.DiagnosticFactory.createDiagnostic;
 import static io.ballerina.tools.diagnostics.DiagnosticSeverity.INTERNAL;
 
-public record CdcServiceValidator(SyntaxNodeAnalysisContext context) {
+public record CdcServiceValidator(SyntaxNodeAnalysisContext context, ServiceDeclarationNode serviceDeclarationNode) {
 
     public void validate() {
-        ServiceDeclarationNode serviceDeclarationNode = (ServiceDeclarationNode) this.context.node();
         NodeList<Node> memberNodes = serviceDeclarationNode.members();
 
         Optional<ServiceDeclarationSymbol> serviceSymbolOpt = getServiceSymbol(serviceDeclarationNode);
@@ -55,13 +58,19 @@ public record CdcServiceValidator(SyntaxNodeAnalysisContext context) {
         }
 
         ServiceDeclarationSymbol serviceSymbol = serviceSymbolOpt.get();
+
+        validateAttachedListeners(serviceSymbol);
+
         Optional<TypeSymbol> listenerOpt = serviceSymbol.listenerTypes().stream().findFirst();
         if (listenerOpt.isEmpty()) {
             return;
         }
 
         TypeSymbol listener = listenerOpt.get();
-        boolean isPostgresListener = isPostgresListener(listener);
+
+        boolean isPostgresListener = listener.getModule()
+                .map(this::isPostgresListener)
+                .orElse(false);
 
         boolean hasValidFunction = serviceDeclarationNode.members().stream()
                 .filter(node -> node.kind() == OBJECT_METHOD_DEFINITION)
@@ -75,14 +84,27 @@ public record CdcServiceValidator(SyntaxNodeAnalysisContext context) {
         validateServiceMembers(memberNodes);
     }
 
+    private void validateAttachedListeners(ServiceDeclarationSymbol serviceDeclarationSymbol) {
+        List<TypeSymbol> listeners = serviceDeclarationSymbol.listenerTypes();
+        if (listeners.size() > 1) {
+            context.reportDiagnostic(Utils.createDiagnostic(INVALID_MULTIPLE_LISTENERS,
+                    serviceDeclarationNode.location()));
+        }
+    }
+
     private Optional<ServiceDeclarationSymbol> getServiceSymbol(ServiceDeclarationNode serviceDeclarationNode) {
         return context.semanticModel().symbol(serviceDeclarationNode)
                 .filter(ServiceDeclarationSymbol.class::isInstance)
                 .map(ServiceDeclarationSymbol.class::cast);
     }
 
-    private boolean isPostgresListener(TypeSymbol listener) {
-        return listener.getName().map(POSTGRES_LISTENER_NAME::equals).orElse(false);
+    private boolean isPostgresListener(ModuleSymbol moduleSymbol) {
+        if (moduleSymbol == null || moduleSymbol.id() == null) {
+            return false;
+        }
+        String moduleName = moduleSymbol.id().moduleName();
+        String orgName = moduleSymbol.id().orgName();
+        return POSTGRESQL_PACKAGE_PREFIX.equals(moduleName) && PACKAGE_ORG.equals(orgName);
     }
 
     private boolean isValidFunction(FunctionDefinitionNode functionNode, boolean isPostgresListener) {
