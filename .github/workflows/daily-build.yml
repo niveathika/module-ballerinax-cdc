@@ -13,3 +13,4 @@ jobs:
     with:
       repo-name: module-ballerinax-cdc
       additional-build-flags: -x :cdc-examples:build
+      
