@@ -90,9 +90,7 @@ function testStartWithServicesWithSameAnnotation() returns error? {
     check mysqlListener.detach(service1);
 }
 
-@test:Config {
-    enable: false
-}
+@test:Config {}
 function testAttachAfterStart() returns error? {
     MockListener mysqlListener = new ({
         database: {
@@ -113,7 +111,6 @@ function testAttachAfterStart() returns error? {
 }
 
 @test:Config {
-    enable: false
 }
 function testDetachAfterStart() returns error? {
     MockListener mysqlListener = new ({
