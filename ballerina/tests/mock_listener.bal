@@ -29,25 +29,25 @@ public isolated class MockListener {
     public isolated function init(*MySqlListenerConfiguration config) {
         map<string> configMap = {};
         populateDebeziumProperties({
-            engineName: config.engineName,
-            offsetStorage: config.offsetStorage,
-            internalSchemaStorage: config.internalSchemaStorage,
-            options: config.options
-            }, configMap);
+                                       engineName: config.engineName,
+                                       offsetStorage: config.offsetStorage,
+                                       internalSchemaStorage: config.internalSchemaStorage,
+                                       options: config.options
+                                   }, configMap);
         populateDatabaseConfigurations({
-            connectorClass: config.database.connectorClass,
-            hostname: config.database.hostname,
-            port: config.database.port,
-            username: config.database.username,
-            password: config.database.password,
-            connectTimeout: config.database.connectTimeout,
-            tasksMax: config.database.tasksMax,
-            secure: config.database.secure,
-            includedTables: config.database.includedTables,
-            excludedTables: config.database.excludedTables,
-            includedColumns: config.database.includedColumns,
-            excludedColumns: config.database.excludedColumns
-        }, configMap);
+                                           connectorClass: config.database.connectorClass,
+                                           hostname: config.database.hostname,
+                                           port: config.database.port,
+                                           username: config.database.username,
+                                           password: config.database.password,
+                                           connectTimeout: config.database.connectTimeout,
+                                           tasksMax: config.database.tasksMax,
+                                           secure: config.database.secure,
+                                           includedTables: config.database.includedTables,
+                                           excludedTables: config.database.excludedTables,
+                                           includedColumns: config.database.includedColumns,
+                                           excludedColumns: config.database.excludedColumns
+                                       }, configMap);
         configMap["database.server.id"] = "100000";
         self.config = configMap.cloneReadOnly();
     }

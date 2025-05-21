@@ -16,9 +16,9 @@
 import ballerina/log;
 import ballerina/os;
 import ballerinax/cdc;
+import ballerinax/googleapis.gmail;
 import ballerinax/mysql;
 import ballerinax/mysql.cdc.driver as _;
-import ballerinax/googleapis.gmail;
 
 configurable string refreshToken = os:getEnv("REFRESH_TOKEN");
 configurable string clientId = os:getEnv("CLIENT_ID");

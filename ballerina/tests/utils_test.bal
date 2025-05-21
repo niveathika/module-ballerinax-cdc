@@ -79,7 +79,7 @@ function testGetDatabaseDebeziumProperties() {
         "database.ssl.truststore.password": "",
         "table.include.list": "",
         "column.include.list": "ya,tan"
-        };
+    };
 
     DatabaseConnection config = {
         username: "root",
