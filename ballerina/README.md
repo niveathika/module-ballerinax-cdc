@@ -9,18 +9,18 @@ With the CDC module, you can:
 
 ## Quickstart
 
-### Step 1: Import the Required Modules
+### Step 1: Import Required Modules
 
 Add the following imports to your Ballerina program:
 
 - `ballerinax/cdc`: Core module that provides APIs to capture and process database change events.
-- `ballerinax/mysql.cdc.driver as _`: Debezium-based driver for MySQL CDC. Use the appropriate driver for your database (e.g., `mssql.cdc.driver`, `postgresql.cdc.driver`, or `oracledb.cdc.driver`).
 - `ballerinax/mysql`: Provides MySQL-specific listener and types for CDC. Replace with the corresponding module for your database if needed.
+- `ballerinax/mysql.cdc.driver as _`: Debezium-based driver for MySQL CDC. Use the appropriate driver for your database (e.g., `mssql.cdc.driver`, `postgresql.cdc.driver`, or `oracledb.cdc.driver`).
 
 ```ballerina
 import ballerinax/cdc;
-import ballerinax/mysql.cdc.driver as _;
 import ballerinax/mysql;
+import ballerinax/mysql.cdc.driver as _;
 ```
 
 ### Step 2: Configure the CDC Listener

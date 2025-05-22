@@ -22,12 +22,21 @@
 #
 # Example:
 # ```ballerina
-# service cdcService on new cdc:MySqlListener() {
+# service cdc:Service on new mysql:CdcListener() {
+#
+#     remote function onRead(record{} after) returns error? {
+#         // Handle the create event
+#     }
+#
 #     remote function onCreate(record{} after) returns error? {
 #         // Handle the create event
 #     }
 #
 #     remote function onUpdate(record{} before, record{} after) returns error? {
+#         // Handle the update event
+#     }
+#
+#     remote function onDelete(record{} before) returns error? {
 #         // Handle the update event
 #     }
 # }

@@ -16,7 +16,7 @@
 
 import ballerina/jballerina.java;
 
-# Attach point to call the native attach method of the CDC listener.
+# Attach point to call the native CDC listener attach method.
 #
 # + cdcListener - the cdc listener object  
 # + cdcService - the cdc service object
@@ -26,7 +26,7 @@ public isolated function externAttach(Listener cdcListener, Service cdcService) 
     'class: "io.ballerina.lib.cdc.Listener"
 } external;
 
-# Attach point to call the detach start method of the CDC listener.
+# Attach point to call the native CDC listener detach method.
 #
 # + cdcListener - the cdc listener object
 # + cdcService - the configuration map
@@ -36,7 +36,7 @@ public isolated function externDetach(Listener cdcListener, Service cdcService) 
     'class: "io.ballerina.lib.cdc.Listener"
 } external;
 
-# Attach point to call the start method of the CDC listener.
+# Attach point to call the native CDC listener start method.
 #
 # + cdcListener - the cdc listener object
 # + config - the configuration map containing debezium properties
@@ -46,7 +46,7 @@ public isolated function externStart(Listener cdcListener, map<string> config) r
     'class: "io.ballerina.lib.cdc.Listener"
 } external;
 
-# Attach point to call the gracefulStop method of the CDC listener.
+# Attach point to call the native CDC listener gracefulStop method.
 #
 # + cdcListener - the cdc listener object
 # + return - an error if the listener cannot be stopped, or `()` if successful
@@ -55,7 +55,7 @@ public isolated function externGracefulStop(Listener cdcListener) returns Error?
     'class: "io.ballerina.lib.cdc.Listener"
 } external;
 
-# Attach point to call the immediateStop method of the CDC listener.
+# Attach point to call the native CDC listener immediateStop method.
 #
 # + cdcListener - the cdc listener object
 # + return - an error if the listener cannot be stopped, or `()` if successful

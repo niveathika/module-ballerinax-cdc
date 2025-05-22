@@ -69,26 +69,6 @@ public enum DecimalHandlingMode {
     STRING = "string"
 }
 
-# Represents the PostgreSQL logical decoding plugins.
-#
-# + PGOUTPUT - The standard logical decoding output plug-in in PostgreSQL 10+
-# + DECODERBUFS - A logical decoding plugin based on Protobuf and maintained by the Debezium community
-public enum PostgreSQLLogicalDecodingPlugin {
-    PGOUTPUT = "pgoutput",
-    DECODERBUFS = "decoderbufs"
-}
-
-# The adapter implementation that the connector uses when it streams database changes. 
-#
-# + LOGMINER - The native Oracle LogMiner adapter
-# + OPENLOGREPLICATOR - The OpenLogReplicator adapter
-# + XSTREAM - The Oracle XStream API
-public enum OracleConnectionAdopter {
-    LOGMINER = "logminer",
-    OPENLOGREPLICATOR = "olr",
-    XSTREAM = "xstream"
-}
-
 # Represents a secure database connection configuration.
 #
 # + sslMode - The SSL mode to use for the connection
