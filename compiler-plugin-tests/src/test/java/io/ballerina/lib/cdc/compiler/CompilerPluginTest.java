@@ -75,13 +75,6 @@ public class CompilerPluginTest {
         Assert.assertEquals(diagnosticResult.errors().size(), 0);
     }
 
-    @Test(description = "Validating import as")
-    public void testValidService2() {
-        PackageCompilation currentPackage = loadAndCompilePackage("valid_service_2");
-        DiagnosticResult diagnosticResult = currentPackage.diagnosticResult();
-        Assert.assertEquals(diagnosticResult.errors().size(), 0);
-    }
-
     @Test(description = "Validate basic service")
     public void testValidService3() {
         PackageCompilation currentPackage = loadAndCompilePackage("valid_service_3");
@@ -159,8 +152,14 @@ public class CompilerPluginTest {
                 {
                         NO_VALID_FUNCTION,
                         "missing valid remote function: expected at least one of " +
-                                "''onRead'', ''onCreate'', ''onUpdate'', ''onDelete'' or ''onTruncate'' functions",
-                        "(32:0,33:1)"
+                                "''onRead'', ''onCreate'', ''onUpdate'' or ''onDelete'' functions",
+                        "(26:0,27:1)"
+                },
+                {
+                        NO_VALID_FUNCTION,
+                        "missing valid remote function: expected at least one of " +
+                                "''onRead'', ''onCreate'', ''onUpdate'' or ''onDelete'' functions",
+                        "(29:0,34:1)"
                 }
         });
     }
@@ -173,12 +172,12 @@ public class CompilerPluginTest {
                 {
                         "BCE2063",
                         "missing.required.parameter",
-                        "(18:41,21:2)"
+                        "(18:36,21:2)"
                 },
                 {
                         "BCE2039",
                         "undefined.parameter",
-                        "(18:46,21:1)"
+                        "(18:41,21:1)"
                 }});
     }
 
@@ -442,7 +441,8 @@ public class CompilerPluginTest {
         });
     }
 
-    @Test(description = "Validate parameters for onTruncate")
+    // Need postgresql module as test dependency
+    @Test(enabled = false, description = "Validate parameters for onTruncate")
     public void testInvalidService20() {
         PackageCompilation currentPackage = loadAndCompilePackage("invalid_service_20");
         DiagnosticResult diagnosticResult = currentPackage.diagnosticResult();

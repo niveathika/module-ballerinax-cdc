@@ -19,13 +19,13 @@ package io.ballerina.lib.cdc;
 
 import io.ballerina.lib.cdc.models.Service;
 import io.ballerina.lib.cdc.utils.Constants.BallerinaErrors;
+import io.ballerina.lib.cdc.utils.ErrorUtils;
 import io.ballerina.runtime.api.Environment;
 import io.ballerina.runtime.api.types.ObjectType;
 import io.ballerina.runtime.api.types.TypeTags;
 import io.ballerina.runtime.api.utils.StringUtils;
 import io.ballerina.runtime.api.utils.TypeUtils;
 import io.ballerina.runtime.api.values.BArray;
-import io.ballerina.runtime.api.values.BError;
 import io.ballerina.runtime.api.values.BMap;
 import io.ballerina.runtime.api.values.BObject;
 import io.ballerina.runtime.api.values.BString;
@@ -36,10 +36,12 @@ import io.debezium.engine.format.Json;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Properties;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static io.ballerina.lib.cdc.utils.Constants.ANN_CONFIG_TABLES;
 import static io.ballerina.lib.cdc.utils.Constants.ANN_NAME_EVENTS_FROM;
@@ -58,24 +60,191 @@ public class Listener {
     public static final String TABLE_TO_SERVICE_MAP_KEY = "TABLE_TO_SERVICE_MAP";
     public static final String DEBEZIUM_ENGINE_KEY = "DEB_ENGINE";
     public static final String EXECUTOR_SERVICE_KEY = "ExecutorService";
+    public static final String IS_STARTED_KEY = "isStarted";
+    public static final String HAS_ATTACHED_SERVICE_KEY = "hasAttachedService";
+    public static final String LISTENER_ID = "Id";
+    private static final ConcurrentHashMap<Object, ReentrantLock> lockMap = new ConcurrentHashMap<>();
 
     public static Object attach(BObject listener, BObject service) {
-        Object serviceMap = listener.getNativeData(TABLE_TO_SERVICE_MAP_KEY);
-        Object serviceConfigAnn = getServiceConfigAnnotation(service);
+        String id = getListenerId(listener);
+        ReentrantLock lock = lockMap.computeIfAbsent(id, k -> new ReentrantLock());
 
-        Map<String, Service> updatedServiceMap = initializeServiceMap(serviceMap);
-
+        lock.lock();
         try {
+            Object isStartedKey = listener.getNativeData(IS_STARTED_KEY);
+            boolean isStarted = isStartedKey != null && ((Boolean) isStartedKey);
+            if (isStarted) {
+                return ErrorUtils.createError(BallerinaErrors.OPERATION_NOT_PERMITTED_ERROR,
+                        "Cannot attach a CDC service to the listener once it is running.");
+            }
+
+            Object serviceMap = listener.getNativeData(TABLE_TO_SERVICE_MAP_KEY);
+            Object serviceConfigAnn = getServiceConfigAnnotation(service);
+
+            Map<String, Service> updatedServiceMap = initializeServiceMap(serviceMap);
             if (serviceConfigAnn == null) {
                 handleUnAnnotatedServiceAttachment(serviceMap, updatedServiceMap, service);
             } else {
                 handleUnAnnotatedServiceAttachment(serviceConfigAnn, service, updatedServiceMap);
             }
-        } catch (BError e) {
+            listener.addNativeData(TABLE_TO_SERVICE_MAP_KEY, updatedServiceMap);
+            listener.addNativeData(HAS_ATTACHED_SERVICE_KEY, true);
+            return null;
+        } catch (Exception e) {
             return e;
+        } finally {
+            lock.unlock();
         }
-        listener.addNativeData(TABLE_TO_SERVICE_MAP_KEY, updatedServiceMap);
-        return null;
+    }
+
+    public static Object detach(BObject listener, BObject service) {
+        String id = getListenerId(listener);
+        ReentrantLock lock = lockMap.computeIfAbsent(id, k -> new ReentrantLock());
+
+        lock.lock();
+        try {
+            Object isStartedKey = listener.getNativeData(IS_STARTED_KEY);
+            boolean isStarted = isStartedKey != null && ((Boolean) isStartedKey);
+            if (isStarted) {
+                return ErrorUtils.createError(BallerinaErrors.OPERATION_NOT_PERMITTED_ERROR,
+                        "Cannot detach a CDC service from the listener once it is running.");
+            }
+
+            Object hasAttachedServiceObj = listener.getNativeData(HAS_ATTACHED_SERVICE_KEY);
+            boolean hasAttachedService = hasAttachedServiceObj != null && ((Boolean) hasAttachedServiceObj);
+            if (hasAttachedService) {
+                return null;
+            }
+            Object serviceMap = listener.getNativeData(TABLE_TO_SERVICE_MAP_KEY);
+            Object serviceConfigAnn = getServiceConfigAnnotation(service);
+
+            if (serviceConfigAnn == null) {
+                hasAttachedService = removeSingleServiceFromMap(listener, serviceMap);
+            } else {
+                hasAttachedService = removeServiceFromMap(listener, serviceMap, serviceConfigAnn);
+            }
+            listener.addNativeData(HAS_ATTACHED_SERVICE_KEY, hasAttachedService);
+            return null;
+        } catch (Exception e) {
+            return e;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public static Object start(Environment environment, BObject listener, BMap<BString, Object> config) {
+        String id = getListenerId(listener);
+        ReentrantLock lock = lockMap.computeIfAbsent(id, k -> new ReentrantLock());
+
+        lock.lock();
+        try {
+            Object isStartedKey = listener.getNativeData(IS_STARTED_KEY);
+            boolean isStarted = isStartedKey != null && ((Boolean) isStartedKey);
+            if (isStarted) {
+                return null;
+            }
+
+            Object hasAttachedServiceObj = listener.getNativeData(HAS_ATTACHED_SERVICE_KEY);
+            boolean hasAttachedService = hasAttachedServiceObj != null && ((Boolean) hasAttachedServiceObj);
+            if (!hasAttachedService) {
+                return ErrorUtils.createError(BallerinaErrors.OPERATION_NOT_PERMITTED_ERROR,
+                        "Cannot start the listener without at least one attached service.");
+            }
+
+            Properties engineProperties = populateEngineProperties(config);
+            @SuppressWarnings("unchecked")
+            ConcurrentHashMap<String, Service> serviceMap = (ConcurrentHashMap<String, Service>) listener
+                    .getNativeData(TABLE_TO_SERVICE_MAP_KEY);
+
+            CompletableFuture<EngineResult> comFuture = new CompletableFuture<>();
+            ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
+            DebeziumEngine<ChangeEvent<String, String>> engine = create(Json.class)
+                    .using(engineProperties)
+                    .notifying(new BalChangeConsumer(serviceMap, environment.getRuntime()))
+                    .using(new DebeziumEngine.ConnectorCallback() {
+                        @Override
+                        public void taskStarted() {
+                            EngineResult result = new EngineResult();
+                            result.success = true;
+                            comFuture.complete(result);
+                        }
+                    })
+                    .using((success, message, error) -> {
+                        EngineResult result = new EngineResult();
+                        result.success = success;
+                        result.message = message;
+                        result.error = error;
+                        comFuture.complete(result);
+                    })
+                    .build();
+            executor.submit(engine);
+
+            EngineResult engineResult = comFuture.get();
+            if (engineResult.success) {
+                listener.addNativeData(DEBEZIUM_ENGINE_KEY, engine);
+                listener.addNativeData(EXECUTOR_SERVICE_KEY, executor);
+            } else {
+                String errorMessage = engineResult.message != null ? engineResult.message
+                        : (engineResult.error != null ? engineResult.error.getMessage() : "Unknown error");
+                return createCdcError("Failed to start the Debezium engine: " + errorMessage);
+            }
+            listener.addNativeData(IS_STARTED_KEY, true);
+            return null;
+        } catch (Throwable t) {
+            return createCdcError("Failed to start the Debezium engine: " + t.getMessage());
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public static Object gracefulStop(BObject listener) {
+        String id = getListenerId(listener);
+        ReentrantLock lock = lockMap.computeIfAbsent(id, k -> new ReentrantLock());
+
+        lock.lock();
+        try {
+            Object debEngine = listener.getNativeData(DEBEZIUM_ENGINE_KEY);
+            if (debEngine != null) {
+                ((DebeziumEngine<?>) debEngine).close();
+                listener.addNativeData(DEBEZIUM_ENGINE_KEY, null);
+            }
+
+            Object executor = listener.getNativeData(EXECUTOR_SERVICE_KEY);
+            if (executor != null) {
+                ((ExecutorService) executor).shutdown();
+                listener.addNativeData(EXECUTOR_SERVICE_KEY, null);
+            }
+
+            listener.addNativeData(IS_STARTED_KEY, false);
+            return null;
+        } catch (IOException e) {
+            return createCdcError("Failed to stop the Debezium engine: " + e.getMessage());
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public static Object immediateStop(BObject listener) {
+        String id = getListenerId(listener);
+        ReentrantLock lock = lockMap.computeIfAbsent(id, k -> new ReentrantLock());
+
+        lock.lock();
+        try {
+            Object executor = listener.getNativeData(EXECUTOR_SERVICE_KEY);
+
+            if (executor != null) {
+                ((ExecutorService) executor).shutdownNow();
+                listener.addNativeData(EXECUTOR_SERVICE_KEY, null);
+            }
+
+            listener.addNativeData(DEBEZIUM_ENGINE_KEY, null);
+            listener.addNativeData(IS_STARTED_KEY, false);
+            return null;
+        } catch (Exception e) {
+            return createCdcError("Failed to stop the Debezium engine: " + e.getMessage());
+        } finally {
+            lock.unlock();
+        }
     }
 
     private static Object getServiceConfigAnnotation(BObject service) {
@@ -121,21 +290,6 @@ public class Listener {
         updatedServiceMap.put(table, new Service(service));
     }
 
-    public static Object detach(BObject listener, BObject service) {
-        Object serviceMap = listener.getNativeData(TABLE_TO_SERVICE_MAP_KEY);
-        Object serviceConfigAnn = getServiceConfigAnnotation(service);
-
-        try {
-            if (serviceConfigAnn == null) {
-                return removeSingleServiceFromMap(listener, serviceMap);
-            } else {
-                return removeServiceFromMap(listener, serviceMap, serviceConfigAnn);
-            }
-        } catch (BError e) {
-            return e;
-        }
-    }
-
     private static boolean removeSingleServiceFromMap(BObject listener, Object serviceMap) {
         if (serviceMap == null) {
             throw createError(BallerinaErrors.OPERATION_NOT_PERMITTED_ERROR,
@@ -166,51 +320,6 @@ public class Listener {
         }
     }
 
-    public static Object start(Environment environment, BObject listener, BMap<BString, Object> config) {
-        Properties engineProperties = populateEngineProperties(config);
-        @SuppressWarnings("unchecked")
-        ConcurrentHashMap<String, Service> serviceMap = (ConcurrentHashMap<String, Service>) listener
-                .getNativeData(TABLE_TO_SERVICE_MAP_KEY);
-
-        try {
-            CompletableFuture<EngineResult> comFuture = new CompletableFuture<>();
-            ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
-            DebeziumEngine<ChangeEvent<String, String>> engine = create(Json.class)
-                    .using(engineProperties)
-                    .notifying(new BalChangeConsumer(serviceMap, environment.getRuntime()))
-                    .using(new DebeziumEngine.ConnectorCallback() {
-                        @Override
-                        public void taskStarted() {
-                            EngineResult result = new EngineResult();
-                            result.success = true;
-                            comFuture.complete(result);
-                        }
-                    })
-                    .using((success, message, error) -> {
-                        EngineResult result = new EngineResult();
-                        result.success = success;
-                        result.message = message;
-                        result.error = error;
-                        comFuture.complete(result);
-                    })
-                    .build();
-            executor.submit(engine);
-
-            EngineResult engineResult = comFuture.get();
-            if (engineResult.success) {
-                listener.addNativeData(DEBEZIUM_ENGINE_KEY, engine);
-                listener.addNativeData(EXECUTOR_SERVICE_KEY, executor);
-            } else {
-                String errorMessage = engineResult.message != null ? engineResult.message
-                        : (engineResult.error != null ? engineResult.error.getMessage() : "Unknown error");
-                return createCdcError("Failed to start the Debezium engine: " + errorMessage);
-            }
-            return null;
-        } catch (Throwable t) {
-            return createCdcError("Failed to start the Debezium engine: " + t.getMessage());
-        }
-    }
-
     private static Properties populateEngineProperties(BMap<BString, Object> config) {
         Properties engineProperties = new Properties();
         for (Map.Entry<BString, Object> configEntry : config.entrySet()) {
@@ -219,30 +328,16 @@ public class Listener {
         return engineProperties;
     }
 
-    public static Object gracefulStop(BObject listener) {
-        Object debEngine = listener.getNativeData(DEBEZIUM_ENGINE_KEY);
-        if (debEngine != null) {
-            try {
-                ((DebeziumEngine<?>) debEngine).close();
-                listener.addNativeData(DEBEZIUM_ENGINE_KEY, null);
-            } catch (IOException e) {
-                return createCdcError("Failed to stop the Debezium engine: " + e.getMessage());
-            }
+    private static String getListenerId(BObject listener) {
+        Object idObj = listener.getNativeData(LISTENER_ID);
+        String id;
+        if (idObj == null) {
+            id = UUID.randomUUID().toString();
+            listener.addNativeData(LISTENER_ID, id);
+        } else {
+            id = (String) idObj;
         }
-        return null;
-    }
-
-    public static Object immediateStop(BObject listener) {
-        Object executor = listener.getNativeData(EXECUTOR_SERVICE_KEY);
-        if (executor != null) {
-            try {
-                ((ExecutorService) executor).shutdownNow();
-                listener.addNativeData(EXECUTOR_SERVICE_KEY, null);
-            } catch (Exception e) {
-                return createCdcError("Failed to stop the Debezium engine: " + e.getMessage());
-            }
-        }
-        return null;
+        return id;
     }
 
     // Helper class to store result

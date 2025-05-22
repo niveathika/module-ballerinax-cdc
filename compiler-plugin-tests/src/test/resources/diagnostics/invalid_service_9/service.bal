@@ -16,12 +16,12 @@
 
 import ballerinax/cdc;
 
-listener cdc:MySqlListener cdcListener = new (database = {
+listener MockListener cdcListener = new (database = {
     username: "root",
     password: "root"
 });
 
-listener cdc:MySqlListener cdcListener2 = new (database = {
+listener MockListener cdcListener2 = new (database = {
     username: "root",
     password: "root"
 });

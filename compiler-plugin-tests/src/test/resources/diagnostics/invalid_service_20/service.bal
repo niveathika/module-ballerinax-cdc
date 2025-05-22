@@ -15,9 +15,9 @@
 // under the License.
 
 import ballerinax/cdc;
+import ballerinax/postgresql;
 
-
-listener cdc:PostgreSqlListener postgresListener = new (database = {
+listener postgresql:Listener postgresListener = new (database = {
     username: "root",
     password: "root",
     databaseName: "testdb"

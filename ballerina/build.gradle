@@ -97,7 +97,73 @@ tasks.register('commitTomlFiles') {
     }
 }
 
+tasks.register('startMySQLServer') {
+    doLast {
+        def stdOut = new ByteArrayOutputStream()
+        def cmd = Os.isFamily(Os.FAMILY_WINDOWS) ? ['cmd', '/c'] : ['sh', '-c']
+        exec {
+            commandLine cmd + ["docker ps --filter name=mysql-cdc"]
+            standardOutput = stdOut
+        }
+        if (!stdOut.toString().contains("mysql-cdc")) {
+            println "Starting MySQL server."
+            exec {
+                commandLine cmd + ["docker compose -f tests/environment/compose.yaml up -d"]
+                standardOutput = stdOut
+            }
+            println stdOut.toString()
+            sleep(20 * 1000)
+        } else {
+            println "MySQL server is already running."
+        }
+    }
+}
+
+tasks.register('stopMySQLServer') {
+    doLast {
+        def stdOut = new ByteArrayOutputStream()
+        def cmd = Os.isFamily(Os.FAMILY_WINDOWS) ? ['cmd', '/c'] : ['sh', '-c']
+        exec {
+            commandLine cmd + ["docker ps --filter name=mysql-cdc"]
+            standardOutput = stdOut
+        }
+        if (stdOut.toString().contains("mysql-cdc")) {
+            println "Stopping MySQL server."
+            exec {
+                commandLine cmd + ["docker compose -f tests/environment/compose.yaml rm -svf"]
+                standardOutput = stdOut
+            }
+            println stdOut.toString()
+            sleep(5 * 1000)
+        } else {
+            println "MySQL server is not started."
+        }
+    }
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            artifact source: createArtifactZip, extension: 'zip'
+        }
+    }
+    repositories {maven {
+            name = 'GitHubPackages'
+            url = uri("https://maven.pkg.github.com/ballerina-platform/module-${packageOrg}-${packageName}")
+            credentials {
+                username = System.getenv('publishUser')
+                password = System.getenv('publishPAT')
+            }
+        }
+    }
+}
+
 updateTomlFiles.dependsOn copyStdlibs
+build.dependsOn "generatePomFileForMavenPublication"
+
+test.dependsOn "startMySQLServer"
+test.finalizedBy "stopMySQLServer"
+
 build.dependsOn ":${packageName}-native:build"
 build.dependsOn ":${packageName}-compiler-plugin:build"
 build.finalizedBy ":${packageName}-compiler-plugin-tests:build"

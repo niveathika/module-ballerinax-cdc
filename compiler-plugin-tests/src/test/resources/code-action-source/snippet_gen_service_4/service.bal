@@ -1,6 +1,6 @@
 import ballerinax/cdc;
 
-service on new cdc:MySqlListener(database = {
+service cdc:Service on new MockListener(database = {
     username: "root",
     password: "root"
 }) {

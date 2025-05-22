@@ -21,7 +21,7 @@ Service testService = service object {
     }
 };
 
-function getDummyMySqlListener() returns MySqlListener {
+function getDummyMySqlListener() returns MockListener {
     return new ({
         database: {
             username: "testUser",
@@ -32,21 +32,21 @@ function getDummyMySqlListener() returns MySqlListener {
 
 @test:Config {}
 function testStartingWithoutAService() returns error? {
-    MySqlListener mysqlListener = getDummyMySqlListener();
+    MockListener mysqlListener = getDummyMySqlListener();
     Error? result = mysqlListener.'start();
     test:assertEquals(result is () ? "" : result.message(), "Cannot start the listener without at least one attached service.");
 }
 
 @test:Config {}
 function testStopWithoutStart() returns error? {
-    MySqlListener mysqlListener = getDummyMySqlListener();
+    MockListener mysqlListener = getDummyMySqlListener();
     error? result = mysqlListener.gracefulStop();
     test:assertTrue(result is ());
 }
 
 @test:Config {}
 function testStartWithConflictingServices() returns error? {
-    MySqlListener mysqlListener = getDummyMySqlListener();
+    MockListener mysqlListener = getDummyMySqlListener();
 
     Service service1 = service object {
         remote function onCreate(record {} after, string tableName) returns error? {
@@ -62,11 +62,12 @@ function testStartWithConflictingServices() returns error? {
     Error? result = mysqlListener.attach(service2);
     test:assertEquals(result is () ? "" : result.message(),
             "The 'cdc:ServiceConfig' annotation is mandatory when attaching multiple services to the 'cdc:Listener'.");
+    check mysqlListener.detach(service1);
 }
 
 @test:Config {}
 function testStartWithServicesWithSameAnnotation() returns error? {
-    MySqlListener mysqlListener = getDummyMySqlListener();
+    MockListener mysqlListener = getDummyMySqlListener();
 
     Service service1 = @ServiceConfig {
         tables: "table1"
@@ -86,33 +87,40 @@ function testStartWithServicesWithSameAnnotation() returns error? {
     error? result = mysqlListener.attach(service2);
     test:assertEquals(result is () ? "" : result.message(),
             "Multiple services cannot be used to receive events from the same table 'table1'.");
+    check mysqlListener.detach(service1);
 }
 
-@test:Config {
-    enable: false
-}
+@test:Config {}
 function testAttachAfterStart() returns error? {
-    MySqlListener mysqlListener = new ({
+    MockListener mysqlListener = new ({
         database: {
-            username: "testUser",
-            password: "testPassword"
+            username,
+            password,
+            port
+        },
+        options: {
+            snapshotMode: NO_DATA
         }
     });
     check mysqlListener.attach(testService);
     check mysqlListener.'start();
     error? result = mysqlListener.attach(testService);
     test:assertEquals(result is () ? "" : result.message(),
-            "Cannot attach CDC service to the listener once it is running.");
+            "Cannot attach a CDC service to the listener once it is running.");
+    check mysqlListener.immediateStop();
 }
 
 @test:Config {
-    enable: false
 }
 function testDetachAfterStart() returns error? {
-    MySqlListener mysqlListener = new ({
+    MockListener mysqlListener = new ({
         database: {
-            username: "testUser",
-            password: "testPassword"
+            username,
+            password,
+            port
+        },
+        options: {
+            snapshotMode: NO_DATA
         }
     });
 
@@ -120,5 +128,6 @@ function testDetachAfterStart() returns error? {
     check mysqlListener.'start();
     error? result = mysqlListener.detach(testService);
     test:assertEquals(result is () ? "" : result.message(),
-            "Cannot detach a service from the listener once it is running.");
+            "Cannot detach a CDC service from the listener once it is running.");
+    check mysqlListener.gracefulStop();
 }

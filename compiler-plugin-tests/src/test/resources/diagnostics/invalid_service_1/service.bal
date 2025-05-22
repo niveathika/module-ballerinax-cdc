@@ -16,7 +16,7 @@
 
 import ballerinax/cdc;
 
-listener cdc:MySqlListener cdcListener = new (database = {
+listener MockListener cdcListener = new (database = {
     username: "root",
     password: "root"
 });
@@ -24,11 +24,12 @@ listener cdc:MySqlListener cdcListener = new (database = {
 service cdc:Service on cdcListener {
 }
 
-listener cdc:PostgreSqlListener postgresListener = new (database = {
-    username: "root",
-    password: "root",
-    databaseName: "testdb"
-});
+service on cdcListener {
+}
 
-service cdc:Service on postgresListener {
+service on new MockListener(database = {
+                                           username: "root",
+                                           password: "root"
+                                       }) {
+
 }

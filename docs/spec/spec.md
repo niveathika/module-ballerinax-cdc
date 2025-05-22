@@ -3,7 +3,7 @@
 _Authors_: [@niveathika](https://github.com/niveathika) \
 _Reviewers_: [@daneshk](https://github.com/daneshk) [@ThisaruGuruge](https://github.com/ThisaruGuruge) \
 _Created_: 2025/04/23 \
-_Updated_: 2025/04/27 \
+_Updated_: 2025/05/19 \
 _Edition_: Swan Lake 
 
 ## Introduction
@@ -24,21 +24,7 @@ The conforming implementation of the specification is released and included in t
   - [1. Overview](#1-overview)
   - [2. Components](#2-components)
           - [Example: Importing the CDC Package](#example-importing-the-cdc-package)
-    - [2.1 Listeners](#21-listeners)
-      - [2.1.1 MySqlListener](#211-mysqllistener)
-        - [2.1.1.1 Initializing `MySqlListener` Using Username and Password](#2111-initializing-mysqllistener-using-username-and-password)
-          - [Example: Initializing the MySQL Listener with Username and Password](#example-initializing-the-mysql-listener-with-username-and-password)
-      - [2.1.2 MSSQL Listener](#212-mssql-listener)
-        - [2.1.2.1 Initializing `MsSqlListener` Using Username, Password, and Database Names](#2121-initializing-mssqllistener-using-username-password-and-database-names)
-          - [Example: Initializing the `MsSqlListener` with Username, Password, and Database Names](#example-initializing-the-mssqllistener-with-username-password-and-database-names)
-      - [2.1.3 PostgeSQL Listener](#213-postgesql-listener)
-        - [2.1.3.1 Initializing `PostgeSqlListener` Using Username, Password, and Database Name](#2131-initializing-postgesqllistener-using-username-password-and-database-name)
-          - [Example: Initializing the `PostgeSqlListener` with Username, Password, and Database Name](#example-initializing-the-postgesqllistener-with-username-password-and-database-name)
-      - [2.1.4 Oracle Listener](#214-oracle-listener)
-        - [2.1.3.1 Initializing `OracleListener` Using Username, Password, and Database Name](#2131-initializing-oraclelistener-using-username-password-and-database-name)
-          - [Example: Initializing the `OracleListener` with Username, Password, and Database Name](#example-initializing-the-oraclelistener-with-username-password-and-database-name)
-      - [2.1.5 Listener Configuration](#215-listener-configuration)
-          - [Example: Listener Configuration](#example-listener-configuration)
+    - [2.1 Listener](#21-listener)
     - [2.2 Service](#22-service)
           - [Example: Service](#example-service)
       - [2.2.1 Service Type](#221-service-type)
@@ -88,85 +74,15 @@ This section describes the components of the Ballerina CDC package. To use the B
 import ballerinax/cdc;
 ```
 
-### 2.1 Listeners
+### 2.1 Listener
 
-The Ballerina CDC module provides two types of listeners: `MySqlListener` and `MsSqlListener`. These listeners are specifically designed to capture real-time changes from MySQL and MSSQL databases, respectively. They enable developers to build applications that respond to database events such as inserts, updates, and deletes.
+The Ballerina CDC package provides a generic `Listener` object, which serves as the foundation for capturing change data events. Each supported database (such as MySQL, MSSQL, PostgreSQL, etc.) implements its own specific listener by extending this base `Listener` object.
 
-Both listeners can be configured with the necessary database connection details and event processing options to suit specific application requirements.
+These database-specific listeners internally call the publicly available extern functions (`externAttach()`, `externDetach()`, `externStart()`, `externGracefulStop()`, `externImmediateStop()`) provided by the CDC module to interact with the underlying change data capture mechanisms.
 
-#### 2.1.1 MySqlListener
+Common configuration records such as `ListenerConfiguration` and `DatabaseConnection` are available in the CDC module. Utility methods are also provided to convert these configurations into Debezium-compatible properties maps, making integration with Debezium seamless. Any additional properties or configurations that are specific to a particular database must be implemented within the respective database modules.
 
-The `MySqlListener` listens to changes in a MySQL database and streams the captured events to the application. It uses the MySQL binary log to detect and process changes.
-
-##### 2.1.1.1 Initializing `MySqlListener` Using Username and Password
-
-The `MySqlListener` requires a username and password to connect to the database. These credentials must be provided during the initialization of the listener.
-
-###### Example: Initializing the MySQL Listener with Username and Password
-
-```ballerina
-listener cdc:MySqlListener mysqlListener = new (database = { username = "root", password = "password" });
-```
-
-#### 2.1.2 MSSQL Listener
-
-The `MsSqlListener` listens to changes in an MSSQL database and streams the captured events to the application. It leverages the SQL Server Change Data Capture (CDC) feature to track and process changes.
-
-##### 2.1.2.1 Initializing `MsSqlListener` Using Username, Password, and Database Names
-
-The `MsSqlListener` requires a username, password and at least one database name to connect to the database. These credentials must be provided during the initialization of the listener.
-
-###### Example: Initializing the `MsSqlListener` with Username, Password, and Database Names
-
-```ballerina
-listener cdc:MsSqlListener mssqlListener = new (database = { username = "root", password = "password", databaseNames: "finance_db",});
-```
-
-#### 2.1.3 PostgeSQL Listener
-
-The `PostgeSqlListener` listens to changes in a PostgreSQL database and streams the captured events to the application.
-
-##### 2.1.3.1 Initializing `PostgeSqlListener` Using Username, Password, and Database Name
-
-The `PostgeSqlListener` requires a username, password and one database name to connect to the server. These credentials must be provided during the initialization of the listener.
-
-###### Example: Initializing the `PostgeSqlListener` with Username, Password, and Database Name
-
-```ballerina
-listener cdc:PostgeSqlListener postgreListener = new (database = { username = "root", password = "password", databaseNames: "finance_db",});
-```
-
-#### 2.1.4 Oracle Listener
-
-The `OracleListener` listens to changes in an Oracle database and streams the captured events to the application.
-
-##### 2.1.3.1 Initializing `OracleListener` Using Username, Password, and Database Name
-
-The `OracleListener` requires a username, password and one database name to connect to the server. These credentials must be provided during the initialization of the listener.
-
-###### Example: Initializing the `OracleListener` with Username, Password, and Database Name
-
-```ballerina
-listener cdc:OracleListener oracleListener = new (database = { username = "root", password = "password", databaseNames: "finance_db",});
-```
-
-#### 2.1.5 Listener Configuration
-
-The CDC listeners allows additional configurations to be passed when creating a `cdc:MySqlListener` or `cdc:MsSqlListener`. These configurations are defined in the `cdc:MySqlConnectorConfiguration` record and `cdc:MsSqlConnectorConfiguration`, enabling developers to customize the behavior of the listener based on their requirements.
-
-###### Example: Listener Configuration
-
-```ballerina
-listener cdc:MySqlListener mysqlListener = new ({
-    hostname: "localhost",
-    port: 3306,
-    username: "cdc_user",
-    password: "cdc_pass",
-    databaseInclude: ["mydb"],
-    tableInclude: ["mydb.customers", "mydb.orders"],
-    snapshotMode: "INITIAL"
-});
-```
+This design allows the CDC package to support multiple databases while maintaining a consistent and extensible API for users.
 
 ### 2.2 Service
 

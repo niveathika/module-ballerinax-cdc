@@ -18,8 +18,11 @@
 package io.ballerina.lib.cdc.compiler.validator;
 
 import io.ballerina.compiler.api.SemanticModel;
+import io.ballerina.compiler.api.symbols.ClassSymbol;
 import io.ballerina.compiler.api.symbols.ServiceDeclarationSymbol;
 import io.ballerina.compiler.api.symbols.Symbol;
+import io.ballerina.compiler.api.symbols.TypeDescKind;
+import io.ballerina.compiler.api.symbols.TypeReferenceTypeSymbol;
 import io.ballerina.compiler.api.symbols.TypeSymbol;
 import io.ballerina.compiler.syntax.tree.ServiceDeclarationNode;
 import io.ballerina.lib.cdc.compiler.Utils;
@@ -31,7 +34,7 @@ import io.ballerina.tools.diagnostics.DiagnosticSeverity;
 import java.util.List;
 import java.util.Optional;
 
-import static io.ballerina.lib.cdc.compiler.DiagnosticCodes.INVALID_MULTIPLE_LISTENERS;
+import static io.ballerina.lib.cdc.compiler.Constants.CDC_LISTENER_NAME;
 
 public class CdcServiceAnalysisTask implements AnalysisTask<SyntaxNodeAnalysisContext> {
 
@@ -47,36 +50,50 @@ public class CdcServiceAnalysisTask implements AnalysisTask<SyntaxNodeAnalysisCo
             return;
         }
         // Created inner class to keep context as class param
-        new CdcServiceValidator(context).validate();
+        new CdcServiceValidator(context, (ServiceDeclarationNode) context.node()).validate();
     }
 
     private boolean isCdcService(SyntaxNodeAnalysisContext context) {
         SemanticModel semanticModel = context.semanticModel();
         ServiceDeclarationNode serviceDeclarationNode = (ServiceDeclarationNode) context.node();
-        Optional<Symbol> symbol = semanticModel.symbol(serviceDeclarationNode);
-        if (symbol.isEmpty()) {
+        Optional<Symbol> symbolOpt = semanticModel.symbol(serviceDeclarationNode);
+        if (symbolOpt.isEmpty() || !(symbolOpt.get() instanceof ServiceDeclarationSymbol serviceSymbol)) {
             return false;
         }
 
-        ServiceDeclarationSymbol serviceDeclarationSymbol = (ServiceDeclarationSymbol) symbol.get();
-        Optional<TypeSymbol> serviceTypeSymbol = serviceDeclarationSymbol.typeDescriptor();
-        if (serviceTypeSymbol.isPresent() && serviceTypeSymbol.get().getModule().isEmpty()) {
-            if (!Utils.isCdcModule(serviceTypeSymbol.get().getModule().get())) {
-                return false;
+        // Prefer checking the service type descriptor if available
+        Optional<TypeSymbol> serviceTypeOpt = serviceSymbol.typeDescriptor();
+        if (serviceTypeOpt.isPresent()) {
+            TypeSymbol serviceType = serviceTypeOpt.get();
+            if (serviceType.getModule().isPresent() && Utils.isCdcModule(serviceType.getModule().get())) {
+                return true;
             }
         }
 
-        List<TypeSymbol> listeners = serviceDeclarationSymbol.listenerTypes();
-        if (listeners.size() > 1) {
-            context.reportDiagnostic(Utils.createDiagnostic(INVALID_MULTIPLE_LISTENERS,
-                    serviceDeclarationNode.location()));
+        // Fallback: check listener types
+        List<TypeSymbol> listeners = serviceSymbol.listenerTypes();
+        if (listeners.size() != 1) {
+            return false;
+        }
+        TypeSymbol listener = listeners.getFirst();
+        if (listener.typeKind() != TypeDescKind.TYPE_REFERENCE) {
             return false;
         }
 
-        return listeners.stream()
-                .map(TypeSymbol::getModule)
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .allMatch(Utils::isCdcModule);
+        TypeSymbol refType = ((TypeReferenceTypeSymbol) listener).typeDescriptor();
+        if (refType.typeKind() != TypeDescKind.OBJECT || !(refType instanceof ClassSymbol)) {
+            return false;
+        }
+
+        List<TypeSymbol> inclusions = ((ClassSymbol) refType).typeInclusions();
+        if (inclusions.size() != 1) {
+            return false;
+        }
+        TypeSymbol inclusion = inclusions.getFirst();
+        if (inclusion.typeKind() != TypeDescKind.TYPE_REFERENCE || inclusion.getModule().isEmpty()) {
+            return false;
+        }
+
+        return Utils.isCdcModule(inclusion.getModule().get()) && inclusion.nameEquals(CDC_LISTENER_NAME);
     }
 }
