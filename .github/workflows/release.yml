@@ -15,4 +15,5 @@ jobs:
       package-name: cdc
       package-org: ballerinax
       additional-build-flags: -x :cdc-examples:build
-      
+      additional-release-flags: -x :cdc-examples:build
+      additional-publish-flags: -x :cdc-examples:build
