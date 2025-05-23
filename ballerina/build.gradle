@@ -54,20 +54,60 @@ ballerina {
 }
 
 dependencies {
-    externalJars(group: 'io.debezium', name: 'debezium-api', version: debeziumVersion)
-    externalJars(group: 'io.debezium', name: 'debezium-core', version: debeziumVersion)
-    externalJars(group: 'io.debezium', name: 'debezium-embedded', version: debeziumVersion)
-    externalJars(group: 'io.debezium', name: 'debezium-storage-file', version: debeziumVersion)
-    externalJars(group: 'io.debezium', name: 'debezium-storage-kafka', version: debeziumVersion)
 
-    externalJars(group: 'org.apache.kafka', name: 'kafka-clients', version: kafkaVersion)
-    externalJars(group: 'org.apache.kafka', name: 'connect-api', version: kafkaVersion)
-    externalJars(group: 'org.apache.kafka', name: 'connect-json', version: kafkaVersion)
-    externalJars(group: 'org.apache.kafka', name: 'connect-runtime', version: kafkaVersion)
+    externalJars(group: 'io.debezium', name: 'debezium-embedded', version: debeziumVersion) {
+        transitive false
+    }
+    externalJars(group: 'io.debezium', name: 'debezium-core', version: debeziumVersion) {
+        // Packed separately
+        exclude group: 'io.debezium', module: 'debezium-api'
+        exclude group: 'com.fasterxml.jackson.datatype', module: 'jackson-datatype-jsr310'
+    }
+    externalJars(group: 'io.debezium', name: 'debezium-api', version: debeziumVersion) {
+        transitive false
+    }
 
-    externalJars(group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: fasterxmlVersion)
-    externalJars(group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version: fasterxmlVersion)
-    externalJars(group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: fasterxmlVersion)
+    externalJars(group: 'io.debezium', name: 'debezium-storage-file', version: debeziumVersion) {
+        transitive false
+    }
+    externalJars(group: 'io.debezium', name: 'debezium-storage-kafka', version: debeziumVersion) {
+        transitive false
+    }
+
+    externalJars(group: 'org.apache.kafka', name: 'connect-runtime', version: kafkaVersion) {
+        exclude group: 'org.slf4j', module: 'slf4j-api'
+        exclude group: 'ch.qos.reload4j', module: 'reload4j'
+        exclude group: 'org.bitbucket.b_c', module: 'jose4j'
+        exclude group: 'com.fasterxml.jackson.jaxrs', module: 'jackson-jaxrs-json-provider'
+        exclude group: 'org.glassfish.jersey.containers', module: 'jersey-container-servlet'
+        exclude group: 'org.glassfish.jersey.inject', module: 'jersey-hk2'
+        exclude group: 'javax.xml.bind', module: 'jaxb-api'
+        exclude group: 'javax.activation', module: 'activation'
+        exclude group: 'org.eclipse.jetty', module: 'jetty-server'
+        exclude group: 'org.eclipse.jetty', module: 'jetty-servlet'
+        exclude group: 'org.eclipse.jetty', module: 'jetty-servlets'
+        exclude group: 'org.eclipse.jetty', module: 'jetty-client' // Duplicate removed
+        exclude group: 'org.reflections', module: 'reflections'
+        exclude group: 'org.apache.maven', module: 'maven-artifact'
+        exclude group: 'io.swagger.core.v3', module: 'swagger-annotations'
+
+        // Packed separately
+        exclude group: 'org.apache.kafka', module: 'connect-api'
+        exclude group: 'org.apache.kafka', module: 'connect-json'
+        exclude group: 'org.apache.kafka', module: 'kafka-clients'
+    }
+
+    externalJars(group: 'org.apache.kafka', name: 'connect-api', version: kafkaVersion) {
+        transitive false
+    }
+    externalJars(group: 'org.apache.kafka', name: 'connect-json', version: kafkaVersion) {
+        exclude group: 'org.slf4j', module: 'slf4j-api'
+        exclude group: 'org.apache.kafka', module: 'connect-api'
+        exclude group: 'com.fasterxml.jackson.datatype', module: 'jackson-datatype-jdk8'
+    }
+    externalJars(group: 'org.apache.kafka', name: 'kafka-clients', version: kafkaVersion) {
+        transitive false
+    }
 }
 
 tasks.register('updateTomlFiles') {
