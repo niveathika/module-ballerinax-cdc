@@ -209,7 +209,7 @@ modules = [
 [[package]]
 org = "ballerinax"
 name = "mysql.cdc.driver"
-version = "1.0.0"
+version = "1.0.1"
 scope = "testOnly"
 dependencies = [
 	{org = "ballerinax", name = "mysql.driver"}
