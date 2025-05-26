@@ -36,7 +36,6 @@ dependencies {
     implementation("io.debezium:debezium-api:${debeziumVersion}") {
         transitive = false
     }
-    implementation group: 'org.slf4j', name: 'slf4j-jdk14', version: "${slf4jVersion}"
 }
 
 def excludePattern = '**/module-info.java'
