@@ -6,9 +6,6 @@
   "name":"[Lcom.fasterxml.jackson.databind.ser.BeanSerializerModifier;"
 },
 {
-  "name":"[Ljavax.management.openmbean.CompositeData;"
-},
-{
   "name":"com.fasterxml.jackson.databind.ext.Java7SupportImpl",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
