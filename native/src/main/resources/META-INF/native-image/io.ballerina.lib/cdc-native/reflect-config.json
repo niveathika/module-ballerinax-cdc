@@ -1,0 +1,65 @@
+[
+{
+  "name":"[Lcom.fasterxml.jackson.databind.deser.BeanDeserializerModifier;"
+},
+{
+  "name":"[Lcom.fasterxml.jackson.databind.ser.BeanSerializerModifier;"
+},
+{
+  "name":"[Ljavax.management.openmbean.CompositeData;"
+},
+{
+  "name":"com.fasterxml.jackson.databind.ext.Java7SupportImpl",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"io.debezium.engine.spi.OffsetCommitPolicy$PeriodicCommitOffsetPolicy",
+  "methods":[{"name":"<init>","parameterTypes":["java.util.Properties"] }]
+},
+{
+  "name":"io.debezium.pipeline.txmetadata.DefaultTransactionMetadataFactory",
+  "methods":[{"name":"<init>","parameterTypes":["io.debezium.config.Configuration"] }]
+},
+{
+  "name":"io.debezium.processors.PostProcessorRegistry",
+  "queryAllPublicMethods":true,
+  "methods":[{"name":"setBeanRegistry","parameterTypes":["io.debezium.bean.spi.BeanRegistry"] }]
+},
+{
+  "name":"io.debezium.relational.history.SchemaHistoryMXBean",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"io.debezium.relational.history.SchemaHistoryMetrics",
+  "queryAllPublicConstructors":true
+},
+{
+  "name":"io.debezium.schema.DefaultTopicNamingStrategy",
+  "methods":[{"name":"<init>","parameterTypes":["java.util.Properties"] }]
+},
+{
+  "name":"io.debezium.schema.SchemaTopicNamingStrategy"
+},
+{
+  "name":"io.debezium.snapshot.SnapshotterService",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"io.debezium.storage.file.history.FileSchemaHistory",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"io.debezium.storage.kafka.history.KafkaSchemaHistory"
+},
+{
+  "name":"org.apache.kafka.clients.admin.NewTopic",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.String","java.util.Optional","java.util.Optional"] }]
+},
+{
+  "name":"org.apache.kafka.connect.json.JsonConverter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.apache.kafka.connect.storage.SimpleHeaderConverter"
+}
+]

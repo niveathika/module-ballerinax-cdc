@@ -1,0 +1,20 @@
+{
+  "resources":{
+  "includes":[{
+    "pattern":"\\QMETA-INF/services/io.debezium.engine.DebeziumEngine$BuilderFactory\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/io.debezium.pipeline.notification.channels.NotificationChannel\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/io.debezium.pipeline.signal.actions.SignalActionProvider\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/io.debezium.pipeline.signal.channels.SignalChannelReader\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/io.debezium.snapshot.spi.SnapshotLock\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/io.debezium.snapshot.spi.SnapshotQuery\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/io.debezium.spi.snapshot.Snapshotter\\E"
+  }
+]},
+  "bundles":[ ]
+}
