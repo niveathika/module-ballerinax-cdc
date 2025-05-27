@@ -16,4 +16,5 @@ jobs:
     uses: ballerina-platform/ballerina-library/.github/workflows/build-with-bal-test-graalvm-template.yml@main
     secrets: inherit
     with:
-      additional_windows_build_flags: -x test
+      additional_ubuntu_build_flags: -x :cdc-examples:build
+      additional_windows_build_flags: -x test -x :cdc-examples:build
