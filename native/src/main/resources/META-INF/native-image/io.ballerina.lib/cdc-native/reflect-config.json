@@ -35,7 +35,8 @@
   "methods":[{"name":"<init>","parameterTypes":["java.util.Properties"] }]
 },
 {
-  "name":"io.debezium.schema.SchemaTopicNamingStrategy"
+  "name":"io.debezium.schema.SchemaTopicNamingStrategy",
+  "methods":[{"name":"<init>","parameterTypes":["java.util.Properties"] }]
 },
 {
   "name":"io.debezium.snapshot.SnapshotterService",
