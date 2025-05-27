@@ -74,7 +74,7 @@ echo "Processing examples in the examples directory..."
 cd "$BAL_EXAMPLES_DIR"
 for dir in $(find "$BAL_EXAMPLES_DIR" -type d -maxdepth 1 -mindepth 1); do
   # Skip the build directory
-  if [[ "$dir" == *build/ ]]; then
+  if [[ "$(basename "$dir")" == "build" ]]; then
     continue
   fi
   echo "Processing example: $dir"
