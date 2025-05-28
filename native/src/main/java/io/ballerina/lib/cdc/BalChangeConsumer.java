@@ -121,7 +121,13 @@ public class BalChangeConsumer implements DebeziumEngine.ChangeConsumer<ChangeEv
         if (this.isSingleServiceAttached) {
             return this.singleService;
         }
-        String serviceMapKey = payload.getDatabase() + "." + payload.getTable();
+        StringBuilder serviceMapKeyBuilder = new StringBuilder(payload.getDatabase()).append(".");
+        if (payload.getSchema() != null && !payload.getSchema().isEmpty()) {
+            serviceMapKeyBuilder.append(payload.getSchema()).append(".");
+        }
+        serviceMapKeyBuilder.append(payload.getTable());
+        String serviceMapKey = serviceMapKeyBuilder.toString();
+
         if (this.serviceMap.containsKey(serviceMapKey)) {
             return this.serviceMap.get(serviceMapKey);
         }
@@ -162,22 +168,23 @@ public class BalChangeConsumer implements DebeziumEngine.ChangeConsumer<ChangeEv
     }
 
     private Object processParameterToIntendedType(Payload payload, String memberKey, Type type) {
-        try {
-            Map<String, Object> jsonDataOptions = new HashMap<>();
-            jsonDataOptions.put(ENABLE_CONSTRAINT_VALIDATION, FALSE);
-            jsonDataOptions.put(ALLOW_DATA_PROJECTION, FALSE);
-            BMap<BString, Object> mapValue = ValueCreator.createRecordValue(
-                    io.ballerina.lib.data.ModuleUtils.getModule(),
-                    PARSER_AS_TYPE_OPTIONS, jsonDataOptions);
-            BTypedesc typeDescValue = ValueCreator.createTypedescValue(TypeUtils.getReferredType(type));
-            return Native.parseString(
-                    StringUtils.fromString(payload.getPayloadMember(memberKey).toString()), mapValue, typeDescValue);
-        } catch (BError e) {
+        Map<String, Object> jsonDataOptions = new HashMap<>();
+        jsonDataOptions.put(ENABLE_CONSTRAINT_VALIDATION, FALSE);
+        jsonDataOptions.put(ALLOW_DATA_PROJECTION, FALSE);
+        BMap<BString, Object> mapValue = ValueCreator.createRecordValue(
+                io.ballerina.lib.data.ModuleUtils.getModule(),
+                PARSER_AS_TYPE_OPTIONS, jsonDataOptions);
+        BTypedesc typeDescValue = ValueCreator.createTypedescValue(TypeUtils.getReferredType(type));
+        JsonObject payloadMember = payload.getPayloadMember(memberKey);
+        String memberString = payloadMember == null ? "{}" : payloadMember.toString();
+        Object parsedRecord = Native.parseString(StringUtils.fromString(memberString), mapValue, typeDescValue);
+        if (parsedRecord instanceof BError e) {
             BMap<BString, Object> detail = ValueCreator.createMapValue();
             detail.put(StringUtils.fromString(EVENT_PROCESSING_ERROR_DETAIL_PAYLOAD_FIELD),
                     JsonUtils.parse(payload.toString()));
             throw createError(PAYLOAD_BINDING_ERROR, "Payload binding failed. " + e.getMessage(), e, detail);
         }
+        return parsedRecord;
     }
 
     @SuppressWarnings("CallToPrintStackTrace")

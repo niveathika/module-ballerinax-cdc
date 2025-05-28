@@ -75,6 +75,7 @@ public final class Constants {
         public static final String OP = "op";
         public static final String PAYLOAD = "payload";
         public static final String DB = "db";
+        public static final String SCHEMA = "schema";
         public static final String TABLE = "table";
 
         private EventMembers() {
