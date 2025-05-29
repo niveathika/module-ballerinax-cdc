@@ -10,3 +10,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+- Fixed schema not included in service map key
+- Fix data binding error being invoked incorrectly
+- Fix payload member throwing null pointer exception
+
+## [1.0.2] - 2025-05-27
+
+### Added
+- GraalVM configurations for MSSQL
+
+## [1.0.1] - 2025-05-26
+
+### Added
+- GraalVM configurations
+
+## [1.0.0] - 2025-05-22
+
+### Added
+- Base cdc:Service, utils, types and compiler plugin

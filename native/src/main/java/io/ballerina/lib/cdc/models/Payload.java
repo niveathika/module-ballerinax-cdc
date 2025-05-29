@@ -24,6 +24,7 @@ import java.util.Optional;
 
 import static io.ballerina.lib.cdc.utils.Constants.EventMembers.DB;
 import static io.ballerina.lib.cdc.utils.Constants.EventMembers.OP;
+import static io.ballerina.lib.cdc.utils.Constants.EventMembers.SCHEMA;
 import static io.ballerina.lib.cdc.utils.Constants.EventMembers.SOURCE;
 import static io.ballerina.lib.cdc.utils.Constants.EventMembers.TABLE;
 
@@ -39,11 +40,19 @@ public class Payload {
     }
 
     public JsonObject getPayloadMember(String key) {
-        return payload.getAsJsonObject(key);
+        JsonElement element = payload.get(key);
+        if (element != null && element.isJsonObject()) {
+            return element.getAsJsonObject();
+        }
+        return null;
     }
 
     public String getDatabase() {
         return getSourceMember(DB);
+    }
+
+    public String getSchema() {
+        return getSourceMember(SCHEMA);
     }
 
     public String getTable() {

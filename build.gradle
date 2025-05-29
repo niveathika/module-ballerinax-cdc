@@ -86,7 +86,7 @@ subprojects {
         ballerinaStdLibs "io.ballerina.lib:data.jsondata-ballerina:${stdlibDataJsonDataVersion}"
 
         ballerinaStdLibs "io.ballerina.stdlib:sql-ballerina:${stdlibSqlVersion}"
-        ballerinaStdLibs "io.ballerina.stdlib:mysql-ballerina:${stdlibMySqlVersion}"
+        ballerinaStdLibs "io.ballerina.stdlib:java.jdbc-ballerina:${stdlibJdbcVersion}"
 
         ballerinaStdLibs "io.ballerina.lib:mysql.cdc.driver-ballerina:${stdlibMysqlCdcDriverVersion}"
         ballerinaStdLibs "io.ballerina.stdlib:mysql.driver-ballerina:${stdlibMysqlDriverVersion}"

@@ -16,7 +16,7 @@
 
 import ballerina/lang.runtime;
 import ballerina/test;
-import ballerinax/mysql;
+import ballerinax/java.jdbc;
 
 Service mysqlTestService =
 @ServiceConfig {tables: "store_db.products"}
@@ -55,11 +55,10 @@ type WrongVendor record {|
     int test;
 |};
 
-final mysql:Client mysqlClient = check new (host = "localhost",
-    port = port,
+final jdbc:Client mysqlClient = check new (
+    url = string `jdbc:mysql://localhost:${port}/${database}`,
     user = username,
-    password = password,
-    database = database
+    password = password
 );
 
 int createEventCount = 0;
